@@ -4,6 +4,9 @@ name: OWRT-ALL
 #CI计划
 on:
   #自动编译：当Auto-Clean运行完成后
+  push:
+    branches:
+      - ForMySelf
   workflow_run:
     workflows: ["MySelf-Auto-Clean"]
     types:
