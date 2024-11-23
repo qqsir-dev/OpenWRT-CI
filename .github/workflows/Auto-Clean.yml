@@ -2,6 +2,9 @@ name: Auto-Clean
 
 on:
   #自动清理：每天早上4点
+  push:
+    branches:
+      - ForMySelf
   schedule:
     - cron: 0 20 * * *
   #手动清理
