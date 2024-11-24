@@ -1,0 +1,21 @@
+    name: Sync with Upstream
+
+    on: 
+
+      schedule: 
+
+        - cron: '0 0 * * *' # Runs every day at midnight
+
+    jobs:
+
+      sync:
+
+        runs-on: ubuntu-latest
+
+        steps:
+
+        - uses: actions/checkout@v3
+
+        - run: git fetch upstream
+
+        - run: git merge upstream/main  # Replace 'main' with your desired branch
