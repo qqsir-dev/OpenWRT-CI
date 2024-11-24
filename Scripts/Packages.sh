@@ -42,6 +42,7 @@ UPDATE_PACKAGE "luci-app-tailscale" "asvow/luci-app-tailscale" "main"
 UPDATE_PACKAGE "luci-app-wolplus" "VIKINGYFY/packages" "main" "pkg"
 UPDATE_PACKAGE "OpenAppFilter" "destan19/OpenAppFilter" "master" "pkg"
 # git clone --depth=1 https://github.com/destan19/OpenAppFilter package/OpenAppFilter
+UPDATE_PACKAGE "ttyd" "coolsnowwolf/packages/utils" "master" "pkg"
 
 if [[ $WRT_REPO != *"immortalwrt"* ]]; then
 	UPDATE_PACKAGE "qmi-wwan" "immortalwrt/wwan-packages" "master" "pkg"
