@@ -115,10 +115,6 @@ jobs:
       - name: Clone Code
         run: |
           git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
-          git clone --depth=1 https://github.com/coolsnowwolf/packages ./wrt/packages/
-          git clone --depth=1 -b openwrt-23.05 https://github.com/coolsnowwolf/luci ./wrt/luci23/
-          git clone --depth=1 https://github.com/coolsnowwolf/routing ./wrt/routing/
-          git clone --depth=1 https://github.com/coolsnowwolf/telephony.git ./wrt/telephony/
 
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
 
