@@ -1,21 +1,38 @@
-    name: Sync with Upstream
+name: Sync Upstream
 
-    on: 
+on:
+  schedule:
+    # Run once a day at midnight UTC
+    - cron: '0 0 * * *'
 
-      schedule: 
+  workflow_dispatch: # Allow manual trigger
+  push:
+    branches:
+      - main
 
-        - cron: '0 0 * * *' # Runs every day at midnight
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+    # Checkout the repository
+    - name: Checkout Repository
+      uses: actions/checkout@main
 
-    jobs:
+    # Set up Git for syncing
+    - name: Set up Git
+      run: |
+        git config user.name "qqsir-dev"
+        git config user.email "qqsir@hotmail.com"
 
-      sync:
+    # Add upstream repository
+    - name: Add Upstream Remote
+      run: |
+        git remote add upstream https://github.com/VIKINGYFY/OpenWRT-CI.git
+        git fetch upstream
 
-        runs-on: ubuntu-latest
-
-        steps:
-
-        - uses: actions/checkout@v3
-
-        - run: git fetch upstream
-
-        - run: git merge upstream/main  # Replace 'main' with your desired branch
+    # Sync with upstream main branch
+    - name: Merge Upstream Changes
+      run: |
+        git checkout main
+        git merge upstream/main
+        git push origin main
