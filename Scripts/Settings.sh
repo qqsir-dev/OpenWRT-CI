@@ -11,7 +11,7 @@ sed -i "s/\.ssid=.*/\.ssid=$WRT_WIFI/g" $(find ./package/kernel/mac80211/ ./pack
 
 # Network Configuration
 SET_NETWROK="./package/base-files/files/etc/uci-defaults/991_set-network.sh"
-if [[ $WRT_TARGET | grep -Eiq "64|86" ]]; then
+if [[ $(echo "$WRT_TARGET" | grep -Eiq "64|86") ]]; then
 	sed -i "/uci commit network/iuci set network.wan.device=\'eth1\'\nuci set network.wan.proto=\'pppoe\'\nuci set network.wan.username=\'990003835168\'\nuci set network.wan.password=\'k5k4t5b6\'\nuci set network.@device[0].ports=\'eth0 eth2 eth3 eth4\'\n" $SET_NETWROK
 	sed -i "/uci commit dhcp/iuci set network.wan6.device=\'@wan\'\nuci set dhcp.lan.start=\'150\'\nuci set dhcp.lan.limit=\'100\'\nuci set dhcp.lan.dhcp_option=\'6,192.168.50.5,119.29.29.29\'\nuci add dhcp host\nuci set dhcp.@host[0].name=\'HOME-SRV\'\nuci set dhcp.@host[0].mac=\'90:2e:16:bd:0b:cc\'\nuci set dhcp.@host[0].ip=\'192.168.50.8\'\nuci set dhcp.@host[0].leasetime=\'infinite\'\nuci add dhcp host\nuci set dhcp.@host[1].name=\'AP\'\nuci set dhcp.@host[1].mac=\'60:cf:84:28:8f:80\'\nuci set dhcp.@host[1].ip=\'192.168.50.6\'\nuci set dhcp.@host[1].leasetime=\'infinite\'\n" $SET_NETWROK
 	# MyOwn
