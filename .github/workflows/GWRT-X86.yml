@@ -1,5 +1,5 @@
 #CI项目
-name: OWRT-ALL
+name: GWRT-x86
 
 #CI计划
 on:
