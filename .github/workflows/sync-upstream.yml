@@ -34,5 +34,5 @@ jobs:
     - name: Merge Upstream Changes
       run: |
         git checkout main
-        git merge upstream/main --allow-unrelated-histories -X theirs
+        git merge upstream/main --allow-unrelated-histories -X ours
         git push origin main
