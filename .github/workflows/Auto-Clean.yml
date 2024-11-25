@@ -2,11 +2,11 @@ name: MySelf-Auto-Clean
 
 on:
   #自动清理：每天早上4点
-  #push:
-  #  branches:
-  #    - ForMySelf
-  #schedule:
-  #  - cron: 0 19 * * *
+  push:
+    branches:
+      - ForMySelf
+  schedule:
+    - cron: 0 19 * * *
   #手动清理
   workflow_dispatch:
     inputs:
