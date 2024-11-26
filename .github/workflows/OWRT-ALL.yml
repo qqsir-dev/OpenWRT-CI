@@ -48,7 +48,7 @@ jobs:
     uses: ./.github/workflows/WRT-CORE.yml
     with:
       #编译平台
-      WRT_TARGET: ${{matrix.TARGET}}
+      WRT_TARGET: ${{matrix.config.TARGET}}
       #默认主题
       WRT_THEME: argon
       #默认主机名
