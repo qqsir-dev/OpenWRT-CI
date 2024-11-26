@@ -8,7 +8,7 @@ on:
  #   workflows: ["Auto-Clean"]
  #   types:
  #     - completed
- schedule:
+  schedule:
     - cron: 0 20 * * *
   #手动编译
   workflow_dispatch:
