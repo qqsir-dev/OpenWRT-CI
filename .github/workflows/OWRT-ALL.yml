@@ -36,6 +36,10 @@ jobs:
       matrix:
         TARGET: [ROCKCHIP, X86, R68S]
         SOURCE: [VIKINGYFY/immortalwrt]
+        IP:
+          - 192.168.11.1 # ROCKCHIP default IP
+          - 192.168.50.2  # X86 default IP
+          - 192.168.50.1  # R68S default IP
 
     #调用公用编译核心WRT-CORE.yml
     uses: ./.github/workflows/WRT-CORE.yml
@@ -49,7 +53,7 @@ jobs:
       #默认WIFI名
       WRT_WIFI: GWRT
       #默认地址
-      WRT_IP: 192.168.50.2
+      WRT_IP: ${{ matrix.IP }}
       #默认密码，仅作提示，修改无用
       WRT_PW: 无
       #源码链接
