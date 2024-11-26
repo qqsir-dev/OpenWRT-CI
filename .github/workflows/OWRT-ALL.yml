@@ -10,17 +10,7 @@ on:
  #     - completed
   schedule:
     - cron: 0 20 * * *
-jobs:
-  run_on_branch:
-    runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@main
-
-      - name: Run only on branch 'ForMySelf'
-        if: github.ref == 'refs/heads/ForMySelf'
-        run: echo "This workflow runs only on branch 'ForMySelf'"
   #手动编译
   workflow_dispatch:
     inputs:
