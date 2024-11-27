@@ -30,7 +30,7 @@ permissions: write-all
 #CI任务
 jobs:
   config:
-    name: ${{matrix.TARGET}}
+    name: ${{matrix.config.TARGET}}
     strategy:
       fail-fast: false
       #max-parallel: 3
@@ -43,6 +43,7 @@ jobs:
             IP: 192.168.50.2
           - TARGET: R68S
             IP: 192.168.50.1
+        BRANCH: [ForMySelf]
         SOURCE: [VIKINGYFY/immortalwrt]
 
     #调用公用编译核心WRT-CORE.yml
