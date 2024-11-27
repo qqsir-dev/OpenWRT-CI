@@ -41,7 +41,7 @@ fi
 
 # Add restart dropbear firewall and DDNS
 SET_RESTART="./package/base-files/files/etc/uci-defaults/999_auto-restart.sh"
-sed -i "/exit/i/etc/init.d/dropbear restart\n/etc/init.d/firewall restart\n/etc/init.d/ddns restart\n" $SET_RESTART
+sed -i "/exit/i/etc/init.d/dropbear enable\n/etc/init.d/firewall restart\n/etc/init.d/ddns restart\n" $SET_RESTART
 
 # 更改 Argon 主题背景
 cp -f $GITHUB_WORKSPACE/pics/bg1.jpg ./package/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
