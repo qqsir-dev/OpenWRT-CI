@@ -4,10 +4,11 @@ name: OWRT-ALL
 #CI计划
 on:
   #自动编译：当Auto-Clean运行完成后
-  #workflow_run:
-  #  workflows: ["Auto-Clean"]
-  #  types:
-  #    - completed
+  workflow_run:
+    workflows: ["Auto-Clean"]
+    types:
+      - completed
+
   #手动编译
   workflow_dispatch:
     inputs:
@@ -27,27 +28,35 @@ permissions: write-all
 #CI任务
 jobs:
   config:
-    name: ${{matrix.TARGET}}
+    name: ${{matrix.config.TARGET}}
     strategy:
       fail-fast: false
       #max-parallel: 3
       matrix:
-        TARGET: [ROCKCHIP, X86]
+        #TARGET: [ROCKCHIP, X86, R68S]
+        config:
+          - TARGET: ROCKCHIP
+            IP: 192.168.11.1
+          - TARGET: X86
+            IP: 192.168.50.2
+          - TARGET: R68S
+            IP: 192.168.50.1
+        BRANCH: [ForMySelf]
         SOURCE: [VIKINGYFY/immortalwrt]
 
     #调用公用编译核心WRT-CORE.yml
     uses: ./.github/workflows/WRT-CORE.yml
     with:
       #编译平台
-      WRT_TARGET: ${{matrix.TARGET}}
+      WRT_TARGET: ${{matrix.config.TARGET}}
       #默认主题
       WRT_THEME: argon
       #默认主机名
-      WRT_NAME: OWRT
+      WRT_NAME: GWRT
       #默认WIFI名
-      WRT_WIFI: OWRT
+      WRT_WIFI: GWRT
       #默认地址
-      WRT_IP: 192.168.10.1
+      WRT_IP: ${{ matrix.config.IP }}
       #默认密码，仅作提示，修改无用
       WRT_PW: 无
       #源码链接
