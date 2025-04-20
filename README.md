@@ -1,5 +1,5 @@
 # OpenWRT-CI
-云编译OpenWRT固件
+云编译OpenWRT固件,模版来源：VIKINGYFY - https://github.com/VIKINGYFY/OpenWRT-CI
 
 官方版：
 https://github.com/immortalwrt/immortalwrt.git
@@ -13,7 +13,7 @@ https://github.com/VIKINGYFY/immortalwrt.git
 
 固件信息里的时间为编译开始的时间，方便核对上游源码提交时间。
 
-MEDIATEK系列、QUALCOMMAX系列、ROCKCHIP系列、X86系列。
+ROCKCHIP系列、X86系列,<H1>目前该项目的配置均为自己使用，欢迎fork但不做任何保证。
 
 # 目录简要说明：
 
