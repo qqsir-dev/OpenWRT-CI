@@ -30,7 +30,11 @@ if [[ $WRT_TARGET == "ROCKCHIP" ]]; then
  	sed -i "/exit 0/iuci add firewall redirect\nuci set firewall.@redirect[0].target=\'DNAT\'\nuci set firewall.@redirect[0].src=\'wan\'\nuci set firewall.@redirect[0].dest=\'lan\'\nuci set firewall.@redirect[0].proto=\'tcp udp\'\nuci set firewall.@redirect[0].src_dport=\'8098\'\nuci set firewall.@redirect[0].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[0].dest_port=\'80\'\nuci set firewall.@redirect[0].name=\'Router\'\nuci commit firewall\n" $SET_NETWROK
   	echo "$WRT_TARGET - $WRT_IP SET"
 fi
-
+cat "$SET_NETWROK"
+# Add restart dropbear firewall and DDNS
+SET_RESTART="./package/base-files/files/etc/uci-defaults/999_auto-restart.sh"
+sed -i "/exit/i/etc/init.d/firewall restart\n/etc/init.d/ddns restart\n" $SET_RESTART
+cat "$SET_RESTART"
 #修改默认主题
 sed -i "s/luci-theme-bootstrap/luci-theme-$WRT_THEME/g" $(find ./feeds/luci/collections/ -type f -name "Makefile")
 #修改immortalwrt.lan关联IP
