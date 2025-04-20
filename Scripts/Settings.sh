@@ -4,7 +4,7 @@
 SET_NETWROK="./package/base-files/files/etc/rc.local"
 
 if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
-	sed -i "/exit 0/iuci set network.wan.proto=\'pppoe\'\nuci set network.wan.username=\'990003835168\'\nuci set network.wan.password=\'k5k4t5b6\'\nuci commit network\n" $SET_NETWROK
+	sed -i "/exit 0/iuci set network.wan.device=\'eth1\'\nuci set network.wan.proto=\'pppoe\'\nuci set network.wan.username=\'990003835168\'\nuci set network.wan.password=\'k5k4t5b6\'\nuci set network.wan6.device=\'eth1\'\nuci commit network\n" $SET_NETWROK
 	sed -i "/exit 0/iuci add dhcp host\nuci set dhcp.@host[0].name=\'HOME-SRV\'\nuci set dhcp.@host[0].mac=\'90:2e:16:bd:0b:cc\'\nuci set dhcp.@host[0].ip=\'192.168.50.8\'\nuci set dhcp.@host[0].leasetime=\'infinite\'\nuci add dhcp host\nuci set dhcp.@host[1].name=\'AP\'\nuci set dhcp.@host[1].mac=\'60:cf:84:28:8f:80\'\nuci set dhcp.@host[1].ip=\'192.168.50.6\'\nuci set dhcp.@host[1].leasetime=\'infinite\'\nuci commit dhcp\n" $SET_NETWROK
 	# MyOwn
 	sed -i "/exit 0/iuci set ddns.AliDDNS=\'service\'\nuci set ddns.AliDDNS.service_name=\'aliyun.com\'\nuci set ddns.AliDDNS.enabled=\'1\'\nuci set ddns.AliDDNS.lookup_host=\'homev6.bmwlive.club\'\nuci set ddns.AliDDNS.domain=\'homev6.bmwlive.club\'\nuci set ddns.AliDDNS.username=\'LTAIHiwKt52WZmKg\'\nuci set ddns.AliDDNS.password=\'Wlxr4IEL1IQKPtXaBlhVlGWqefF8BK\'\nuci set ddns.AliDDNS.use_ipv6=\'1\'\nuci set ddns.AliDDNS.ip_source=\'interface\'\nuci set ddns.AliDDNS.interface=\'pppoe-wan\'\nuci set ddns.AliDDNS.ip_interface=\'pppoe-wan\'\nuci set ddns.aliyun=\'service\'\nuci set ddns.aliyun.service_name=\'aliyun.com\'\nuci set ddns.aliyun.enabled=\'1\'\nuci set ddns.aliyun.lookup_host=\'home.bmwlive.club\'\nuci set ddns.aliyun.domain=\'home.bmwlive.club\'\nuci set ddns.aliyun.username=\'LTAIHiwKt52WZmKg\'\nuci set ddns.aliyun.password=\'Wlxr4IEL1IQKPtXaBlhVlGWqefF8BK\'\nuci set uci set ddns.aliyun.ip_source=\'web\'\nuci set ddns.aliyun.ip_url=\'http://ip.3322.net\'\nuci set ddns.aliyun.bind_network=\'wan\'\nuci commit ddns\n" $SET_NETWROK
@@ -31,10 +31,7 @@ if echo "$WRT_CONFIG" | grep -Eiq "ROCK"; then
   	echo "$WRT_CONFIG - $WRT_IP SET"
 fi
 cat "$SET_NETWROK"
-# Add restart dropbear firewall and DDNS
-SET_RESTART="./package/base-files/files/etc/uci-defaults/999_auto-restart.sh"
-sed -i "/exit/i/etc/init.d/firewall restart\n/etc/init.d/ddns restart\n" $SET_RESTART
-cat "$SET_RESTART"
+
 #修改默认主题
 sed -i "s/luci-theme-bootstrap/luci-theme-$WRT_THEME/g" $(find ./feeds/luci/collections/ -type f -name "Makefile")
 #修改immortalwrt.lan关联IP
