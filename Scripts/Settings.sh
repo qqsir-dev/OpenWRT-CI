@@ -3,7 +3,7 @@
 # Network Configuration
 SET_NETWROK="./package/base-files/files/etc/uci-defaults/991_set-network.sh"
 
-if echo "$WRT_TARGET" | grep -Eiq "64|86"; then
+if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
 	sed -i "/uci commit network/i\        uci set network.wan.device=\'eth1\'\n        uci set network.wan.proto=\'pppoe\'\n        uci set network.wan.username=\'990003835168\'\n        uci set network.wan.password=\'k5k4t5b6\'\n        uci set network.wan6.device=\'@wan\'\n" $SET_NETWROK
 	sed -i "/uci commit dhcp/i\        uci add dhcp host\n        uci set dhcp.@host[0].name=\'HOME-SRV\'\n        uci set dhcp.@host[0].mac=\'90:2e:16:bd:0b:cc\'\n        uci set dhcp.@host[0].ip=\'192.168.50.8\'\n        uci set dhcp.@host[0].leasetime=\'infinite\'\n        uci add dhcp host\n        uci set dhcp.@host[1].name=\'AP\'\n        uci set dhcp.@host[1].mac=\'60:cf:84:28:8f:80\'\n        uci set dhcp.@host[1].ip=\'192.168.50.6\'\n        uci set dhcp.@host[1].leasetime=\'infinite\'\n" $SET_NETWROK
 	# MyOwn
@@ -14,7 +14,7 @@ if echo "$WRT_TARGET" | grep -Eiq "64|86"; then
   	sed -i "/exit 0/iuci set luci.main.lang=\'en\'\nuci commit luci\n" $SET_NETWROK
   	echo "$WRT_TARGET - $WRT_IP SET"
 fi
-if [[ $WRT_TARGET == "R68S" ]]; then
+if [[ $WRT_CONFIG == "R68S" ]]; then
 	sed -i "/uci commit network/i\        uci set network.wan.device=\'eth3\'\n        uci set network.wan.proto=\'pppoe\'\n        uci set network.wan.username=\'990001257663\'\n        uci set network.wan.password=\'u6s3x4r8\'\n        uci set network.@device[0].ports=\'eth0 eth1 eth2\'\n" $SET_NETWROK
 	# sed -i "/uci commit dhcp/i\        uci set dhcp.lan.start=\'150\'\n        uci set dhcp.lan.limit=\'100\'\n" $SET_NETWROK
  	# MyOwn
@@ -23,7 +23,7 @@ if [[ $WRT_TARGET == "R68S" ]]; then
 	sed -i "/exit 0/iuci add firewall redirect\nuci set firewall.@redirect[0].target=\'DNAT\'\nuci set firewall.@redirect[0].src=\'wan\'\nuci set firewall.@redirect[0].dest=\'lan\'\nuci set firewall.@redirect[0].proto=\'tcp udp\'\nuci set firewall.@redirect[0].src_dport=\'8098\'\nuci set firewall.@redirect[0].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[0].dest_port=\'80\'\nuci set firewall.@redirect[0].name=\'Router\'\nuci add firewall redirect\nuci set firewall.@redirect[1].target=\'DNAT\'\nuci set firewall.@redirect[1].src=\'wan\'\nuci set firewall.@redirect[1].dest=\'lan\'\nuci set firewall.@redirect[1].proto=\'tcp udp\'\nuci set firewall.@redirect[1].src_dport=\'8043\'\nuci set firewall.@redirect[1].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[1].dest_port=\'443\'\nuci set firewall.@redirect[1].name=\'Router\'\nuci commit firewall\n" $SET_NETWROK
  	echo "$WRT_TARGET - $WRT_IP SET"
 fi
-if [[ $WRT_TARGET == "ROCKCHIP" ]]; then
+if [[ $WRT_CONFIG == "ROCKCHIP" ]]; then
 	sed -i "/uci commit network/i\        uci set network.lan.delegate=\'0\'\n" $SET_NETWROK
 	# sed -i "/uci commit dhcp/i\        uci set dhcp.lan.start=\'150\'\n        uci set dhcp.lan.limit=\'100\'\n        uci set dhcp.lan.ra=\'server\'\n        uci set dhcp.lan.ndp=\'relay\'\n        uci set dhcp.lan.ra_flags=\'none\'\n        uci set dhcp.lan.dns_service=\'0\'\n" $SET_NETWROK
 	# Firewall4 PortForward Configuration
