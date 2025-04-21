@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       NUMBER:
-        default: '0'
+        default: '3'
         required: false
         type: string
 
@@ -26,4 +26,4 @@ jobs:
           releases_keep_latest: ${{inputs.NUMBER || '0'}}
           delete_tags: true
           delete_workflows: true
-          workflows_keep_day: 0
+          workflows_keep_day: 3
