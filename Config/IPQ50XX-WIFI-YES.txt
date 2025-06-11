@@ -3,3 +3,17 @@ CONFIG_TARGET_qualcommax=y
 CONFIG_TARGET_qualcommax_ipq50xx=y
 #设备列表
 CONFIG_TARGET_DEVICE_qualcommax_ipq50xx_DEVICE_jdcloud_re-cs-03=y
+#内核调整Add commentMore actions
+CONFIG_PACKAGE_kmod-qca-nss-drv-eogremgr=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-gre=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-igs=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-l2tpv2=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-map-t=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-match=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-mirror=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-pptp=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-qdisc=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-tun6rd=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-tunipip6=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-vxlanmgr=n
+CONFIG_PACKAGE_kmod-qca-nss-drv-wifi-meshmgr=n
