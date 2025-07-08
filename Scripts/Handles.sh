@@ -111,7 +111,7 @@ if [ -f "$RUST_FILE" ]; then
 	cd $PKG_PATH && echo "rust has been fixed!"
 fi
 #修复DiskMan编译失败
-DM_FILE=$(find ./ -maxdepth 3 -type f -wholename "*/luci-app-diskman/Makefile")
+DM_FILE="./luci-app-diskman/applications/luci-app-diskman/Makefile"
 if [ -f "$DM_FILE" ]; then
 	echo " "
 
