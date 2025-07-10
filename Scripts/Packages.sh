@@ -48,8 +48,6 @@ UPDATE_PACKAGE() {
 UPDATE_PACKAGE "luci-theme-argon" "jerrykuku/luci-theme-argon" "master"
 UPDATE_PACKAGE "luci-app-argon-config" "jerrykuku/luci-app-argon-config" "master"
 # UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-24.10"
-UPDATE_PACKAGE "theme-kucat" "sirpdboy/luci-theme-kucat" "js"
-UPDATE_PACKAGE "kucat-config" "sirpdboy/luci-app-kucat-config" "main"
 UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf"
 
 UPDATE_PACKAGE "homeproxy" "VIKINGYFY/homeproxy" "main"
