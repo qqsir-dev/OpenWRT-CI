@@ -85,7 +85,7 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 	if [[ "${WRT_CONFIG,,}" == *"ipq50"* ]]; then
 		echo "CONFIG_NSS_FIRMWARE_VERSION_12_2=y" >> ./.config
 	else
-		echo "CONFIG_NSS_FIRMWARE_VERSION_12_5=y" >> ./.configAdd commentMore actions
+		echo "CONFIG_NSS_FIRMWARE_VERSION_12_5=y" >> ./.config
 	fi
  	#开启sqm-nss插件
 	echo "CONFIG_PACKAGE_luci-app-sqm=y" >> ./.config
