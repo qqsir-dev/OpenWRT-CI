@@ -12,47 +12,6 @@ if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
 	sed -i "/exit 0/iuci add firewall redirect\nuci set firewall.@redirect[0].target=\'DNAT\'\nuci set firewall.@redirect[0].src=\'wan\'\nuci set firewall.@redirect[0].dest=\'lan\'\nuci set firewall.@redirect[0].src_dport=\'1688\'\nuci set firewall.@redirect[0].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[0].dest_port=\'1688\'\nuci set firewall.@redirect[0].name=\'KMS\'\nuci add firewall redirect\nuci set firewall.@redirect[1].target=\'DNAT\'\nuci set firewall.@redirect[1].src=\'wan\'\nuci set firewall.@redirect[1].proto=\'tcp\'\nuci set firewall.@redirect[1].src_dport=\'3389\'\nuci set firewall.@redirect[1].dest_ip=\'192.168.50.8\'\nuci set firewall.@redirect[1].dest_port=\'3389\'\nuci set firewall.@redirect[1].name=\'RDP\'\nuci set firewall.@redirect[1].dest=\'lan\'\nuci add firewall redirect\nuci set firewall.@redirect[2].target=\'DNAT\'\nuci set firewall.@redirect[2].src=\'wan\'\nuci set firewall.@redirect[2].proto=\'tcp udp\'\nuci set firewall.@redirect[2].src_dport=\'2302\'\nuci set firewall.@redirect[2].dest_ip=\'192.168.50.8\'\nuci set firewall.@redirect[2].dest_port=\'2302\'\nuci set firewall.@redirect[2].name=\'DayZ\'\nuci set firewall.@redirect[2].dest=\'lan\'\nuci add firewall redirect\nuci set firewall.@redirect[3].target=\'DNAT\'\nuci set firewall.@redirect[3].src=\'wan\'\nuci set firewall.@redirect[3].dest=\'lan\'\nuci set firewall.@redirect[3].proto=\'udp\'\nuci set firewall.@redirect[3].src_dport=\'27016\'\nuci set firewall.@redirect[3].dest_ip=\'192.168.50.8\'\nuci set firewall.@redirect[3].dest_port=\'27016\'\nuci set firewall.@redirect[3].name=\'DayZ\'\nuci add firewall redirect\nuci set firewall.@redirect[4].target=\'DNAT\'\nuci set firewall.@redirect[4].src=\'wan\'\nuci set firewall.@redirect[4].dest=\'lan\'\nuci set firewall.@redirect[4].proto=\'tcp udp\'\nuci set firewall.@redirect[4].src_dport=\'2308\'\nuci set firewall.@redirect[4].dest_ip=\'192.168.50.8\'\nuci set firewall.@redirect[4].dest_port=\'2308\'\nuci set firewall.@redirect[4].name=\'DayZ\'\nuci add firewall redirect\nuci set firewall.@redirect[5].target=\'DNAT\'\nuci set firewall.@redirect[5].src=\'wan\'\nuci set firewall.@redirect[5].dest=\'lan\'\nuci set firewall.@redirect[5].proto=\'tcp udp\'\nuci set firewall.@redirect[5].src_dport=\'8098\'\nuci set firewall.@redirect[5].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[5].dest_port=\'80\'\nuci set firewall.@redirect[5].name=\'Router\'\nuci add firewall redirect\nuci set firewall.@redirect[6].target=\'DNAT\'\nuci set firewall.@redirect[6].src=\'wan\'\nuci set firewall.@redirect[6].dest=\'lan\'\nuci set firewall.@redirect[6].proto=\'tcp udp\'\nuci set firewall.@redirect[6].src_dport=\'8043\'\nuci set firewall.@redirect[6].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[6].dest_port=\'443\'\nuci set firewall.@redirect[6].name=\'Router\'\nuci add firewall redirect\nuci set firewall.@redirect[7].target=\'DNAT\'\nuci set firewall.@redirect[7].src=\'wan\'\nuci set firewall.@redirect[7].dest=\'lan\'\nuci set firewall.@redirect[7].proto=\'tcp udp\'\nuci set firewall.@redirect[7].src_dport=\'8099\'\nuci set firewall.@redirect[7].dest_ip=\'192.168.50.9\'\nuci set firewall.@redirect[7].dest_port=\'19999\'\nuci set firewall.@redirect[7].name=\'Netdata\'\nuci add firewall redirect\nuci set firewall.@redirect[8].target=\'DNAT\'\nuci set firewall.@redirect[8].src=\'wan\'\nuci set firewall.@redirect[8].dest=\'lan\'\nuci set firewall.@redirect[8].proto=\'tcp udp\'\nuci set firewall.@redirect[8].src_dport=\'9090\'\nuci set firewall.@redirect[8].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[8].dest_port=\'9090\'\nuci set firewall.@redirect[8].name=\'OpenClash\'\nuci add firewall redirect\nuci set firewall.@redirect[9].target=\'DNAT\'\nuci set firewall.@redirect[9].src=\'wan\'\nuci set firewall.@redirect[9].dest=\'lan\'\nuci set firewall.@redirect[9].proto=\'tcp udp\'\nuci set firewall.@redirect[9].src_dport=\'19999\'\nuci set firewall.@redirect[9].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[9].dest_port=\'19999\'\nuci set firewall.@redirect[9].name=\'LedeNetdata\'\nuci add firewall redirect\nuci set firewall.@redirect[10].target=\'DNAT\'\nuci set firewall.@redirect[10].src=\'wan\'\nuci set firewall.@redirect[10].dest=\'lan\'\nuci set firewall.@redirect[10].proto=\'tcp udp\'\nuci set firewall.@redirect[10].src_dport=\'7681\'\nuci set firewall.@redirect[10].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[10].dest_port=\'7681\'\nuci set firewall.@redirect[10].name=\'TTYD\'\nuci add firewall redirect\nuci set firewall.@redirect[11].target=\'DNAT\'\nuci set firewall.@redirect[11].src=\'wan\'\nuci set firewall.@redirect[11].dest=\'lan\'\nuci set firewall.@redirect[11].proto=\'tcp\'\nuci set firewall.@redirect[11].src_dport=\'8096\'\nuci set firewall.@redirect[11].dest_ip=\'192.168.50.10\'\nuci set firewall.@redirect[11].dest_port=\'80\'\nuci set firewall.@redirect[11].name=\'ESXi\'\nuci add firewall redirect\nuci set firewall.@redirect[12].dest=\'lan\'\nuci set firewall.@redirect[12].target=\'DNAT\'\nuci set firewall.@redirect[12].name=\'IPV6\'\nuci set firewall.@redirect[12].family=\'ipv6\'\nuci set firewall.@redirect[12].proto=\'tcp\' \'udp\' \'icmp\'\nuci set firewall.@redirect[12].src=\'wan\'\nuci set firewall.@redirect[12].src_dport=\'0-65535\'\nuci commit firewall\n" $SET_NETWROK
  	# set default language to english
   	sed -i "/exit 0/iuci set luci.main.lang=\'en\'\nuci commit luci\n" $SET_NETWROK
-
-	
-	# 清空并写入配置内容
-	cat << 'EOF' > /etc/ddns-go/config.yaml
-	dnsconf:
-	    - name: ""
-	      ipv4:
-	        enable: true
-	        gettype: netInterface
-	        url: https://api.ipify.org, https://ddns.oray.com/checkip, https://ip.3322.net, https://4.ipw.cn, https://v4.yinghualuo.cn/bejson
-	        netinterface: pppoe-wan
-	        cmd: ""
-	        domains:
-	            - home.bmwlive.club
-	      ipv6:
-	        enable: true
-	        gettype: netInterface
-	        url: https://api64.ipify.org, https://speed.neu6.edu.cn/getIP.php, https://v6.ident.me, https://6.ipw.cn, https://v6.yinghualuo.cn/bejson
-	        netinterface: br-lan
-	        cmd: ""
-	        ipv6reg: ""
-	        domains:
-	            - homev6.bmwlive.club
-	      dns:
-	        name: alidns
-	        id: LTAIHiwKt52WZmKg
-	        secret: Wlxr4IEL1IQKPtXaBlhVlGWqefF8BK
-	      ttl: ""
-	user:
-	    username: admin
-	    password: $2a$10$dlwSLz68q1hcNPBZJvOCv.ISk4N7IZFny3FFxwF3TUwa1MnK97g1W
-	webhook:
-	    webhookurl: ""
-	    webhookrequestbody: ""
-	    webhookheaders: ""
-	notallowwanaccess: false
-	lang: en
-	EOF
-
-
-    
   	echo "$WRT_CONFIG - $WRT_IP SET"
 fi
 if echo "$WRT_CONFIG" | grep -Eiq "68"; then
