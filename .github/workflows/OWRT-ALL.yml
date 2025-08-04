@@ -33,8 +33,8 @@ jobs:
       #max-parallel: 3
       matrix:
         CONFIG: [ROCKCHIP, X86, R68S]
-        SOURCE: [immortalwrt/immortalwrt]
-        BRANCH: [master]
+        SOURCE: [VIKINGYFY/immortalwrt]
+        BRANCH: [owrt]
 
     #调用公用编译核心WRT-CORE.yml
     uses: ./.github/workflows/WRT-CORE.yml
