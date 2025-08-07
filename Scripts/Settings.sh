@@ -34,7 +34,7 @@ if echo "$WRT_CONFIG" | grep -Eiq "ROCK"; then
  	sed -i "/exit 0/iuci add firewall redirect\nuci set firewall.@redirect[0].target=\'DNAT\'\nuci set firewall.@redirect[0].src=\'wan\'\nuci set firewall.@redirect[0].dest=\'lan\'\nuci set firewall.@redirect[0].proto=\'tcp udp\'\nuci set firewall.@redirect[0].src_dport=\'8098\'\nuci set firewall.@redirect[0].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[0].dest_port=\'80\'\nuci set firewall.@redirect[0].name=\'Router\'\nuci add firewall redirect\nuci set firewall.@redirect[12].dest=\'lan\'\nuci set firewall.@redirect[12].target=\'DNAT\'\nuci set firewall.@redirect[12].name=\'IPV6\'\nuci set firewall.@redirect[12].family=\'ipv6\'\nuci set firewall.@redirect[12].proto=\'tcp\' \'udp\' \'icmp\'\nuci set firewall.@redirect[12].src=\'wan\'\nuci set firewall.@redirect[12].src_dport=\'0-65535\'\nuci commit firewall\n" $SET_NETWROK
   	echo "$WRT_CONFIG - $WRT_IP SET"
 fi
-# cat "$SET_NETWROK"
+cat "$SET_NETWROK"
 
 #修改默认主题
 sed -i "s/luci-theme-bootstrap/luci-theme-$WRT_THEME/g" $(find ./feeds/luci/collections/ -type f -name "Makefile")
