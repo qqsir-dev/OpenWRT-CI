@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Network Configuration
+SET_NETWROK="./package/base-files/files/etc/rc.local"
+
 if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
 	sed -i "/exit 0/iuci set network.wan.device=\'eth1\'\nuci set network.wan.proto=\'pppoe\'\nuci set network.wan.username=\'990003835168\'\nuci set network.wan.password=\'k5k4t5b6\'\nuci set network.wan6.device=\'@wan\'\nuci set network.wan6.norelease=\'1\'\nuci set network.wan6.sourcefilter=\'0\'\nuci set dhcp.lan.ra=\'server\'\nuci set dhcp.lan.ra_default=\'1\'\nuci set dhcp.lan.ra_flags=\'none\'\nuci commit network\n\/etc\/init.d\/network restart\n" $SET_NETWROK
 	sed -i "/exit 0/iuci add dhcp host\nuci set dhcp.@host[0].name=\'HOME-SRV\'\nuci set dhcp.@host[0].mac=\'90:2e:16:bd:0b:cc\'\nuci set dhcp.@host[0].ip=\'192.168.50.8\'\nuci set dhcp.@host[0].leasetime=\'infinite\'\nuci add dhcp host\nuci set dhcp.@host[1].name=\'AP\'\nuci set dhcp.@host[1].mac=\'60:cf:84:28:8f:80\'\nuci set dhcp.@host[1].ip=\'192.168.50.6\'\nuci set dhcp.@host[1].leasetime=\'infinite\'\nuci commit dhcp\n" $SET_NETWROK
