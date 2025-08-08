@@ -158,9 +158,46 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
-      - name: Custom Settings
+      - name: Download private config file (from qqsir-dev/config)
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          cd ./wrt/
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "❌ GH_TOKEN 未设置，无法访问私有仓库 qqsir-dev/config"
+            echo "请在本仓库 Settings → Secrets → Actions 添加 GH_TOKEN（PAT，Contents: Read）"
+            exit 1
+          fi
+
+          REPO="qqsir-dev/config"
+          REF="main"
+          if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
+            FILE_PATH="ddns-go/home/ddns-go-config.yaml"
+          fi
+          if echo "$WRT_CONFIG" | grep -Eiq "68"; then
+            FILE_PATH="ddns-go/fhome/ddns-go-config.yaml"
+          fi
+          OUT="package/base-files/files/etc/ddns-go-config.yaml"
+
+          mkdir -p "$(dirname "$OUT")"
+
+          echo "➡️ 通过 GitHub API 下载私有文件：${REPO}@${REF}:${FILE_PATH}"
+          curl -fsSL \
+            -H "Authorization: token ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            "https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?ref=${REF}" \
+            -o "$OUT"
+
+          if [ ! -s "$OUT" ]; then
+            echo "❌ 下载失败：$OUT 为空（请检查路径/分支/权限）"
+            exit 1
+          fi
+
+          echo "✅ 下载完成：$OUT (大小: $(wc -c < "$OUT") 字节)"
+
+      
+      - name: Custom Settings
         run: |
           cd ./wrt/
 
