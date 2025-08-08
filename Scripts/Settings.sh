@@ -12,12 +12,11 @@ if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
   	sed -i "/exit 0/iuci set luci.main.lang=\'en\'\nuci commit luci\n" $SET_NETWROK
 	# Download remote configuration file and overwrite local configuration
  	
-	curl -H "Authorization: token $GH_TOKEN" \
+	curl -H "Authorization: token ${{env.GH_TOKEN}}" \
      -L "https://raw.githubusercontent.com/qqsir-dev/config/main/ddns-go/home/ddns-go-config.yaml" \
      -o "package/base-files/files/etc/ddns-go-config.yaml"
 	cat package/base-files/files/etc/ddns-go-config.yaml
-  	# sed -i "/exit 0/i curl -H \"Authorization: token $GH_TOKEN\" -L https://raw.githubusercontent.com/qqsir-dev/config/main/ddns-go/home/ddns-go-config.yaml -o /etc/ddns-go/ddns-go-config.yaml" "$SET_NETWROK"
-	sed -i "/exit 0/icp \/etc\/ddns-go-config.yaml \/etc\/ddns-go\/ddns-go-config.yaml\nuci set ddns-go.config.enabled=\'1\'\nuci commit ddns-go\n\/etc\/init.d\/service ddns-go start\n" $SET_NETWROK
+  	sed -i "/exit 0/icp \/etc\/ddns-go-config.yaml \/etc\/ddns-go\/ddns-go-config.yaml\nuci set ddns-go.config.enabled=\'1\'\nuci commit ddns-go\n\/etc\/init.d\/service ddns-go start\n" $SET_NETWROK
 	echo "$WRT_CONFIG - $WRT_IP SET"
 fi
 if echo "$WRT_CONFIG" | grep -Eiq "68"; then
