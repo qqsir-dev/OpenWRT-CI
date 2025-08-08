@@ -172,12 +172,16 @@ jobs:
 
           REPO="qqsir-dev/config"
           REF="main"
+          
           if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
             FILE_PATH="ddns-go/home/ddns-go-config.yaml"
-          fi
-          if echo "$WRT_CONFIG" | grep -Eiq "68"; then
+          elif echo "$WRT_CONFIG" | grep -Eiq "68"; then
             FILE_PATH="ddns-go/fhome/ddns-go-config.yaml"
+          else
+            echo "当前 WRT_CONFIG=$WRT_CONFIG 不需要下载私有配置，跳过"
+            exit 0
           fi
+
           OUT="package/base-files/files/etc/ddns-go-config.yaml"
 
           mkdir -p "$(dirname "$OUT")"
@@ -191,6 +195,7 @@ jobs:
 
           if [ ! -s "$OUT" ]; then
             echo "❌ 下载失败：$OUT 为空（请检查路径/分支/权限）"
+            exit 1
           fi
 
           echo "✅ 下载完成：$OUT (大小: $(wc -c < "$OUT") 字节)"
