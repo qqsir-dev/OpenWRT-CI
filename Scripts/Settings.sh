@@ -2,7 +2,13 @@
 
 # Network Configuration
 SET_NETWROK="./package/base-files/files/etc/rc.local"
-echo "GH_TOKEN is: ${GH_TOKEN:0:5}******"
+if [ -n "$GH_TOKEN" ]; then
+    echo "GH_TOKEN is set"
+	echo "GH_TOKEN length: ${#GH_TOKEN}"
+
+else
+    echo "GH_TOKEN is empty"
+fi
 
 if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
 	sed -i "/exit 0/iuci set network.wan.device=\'eth1\'\nuci set network.wan.proto=\'pppoe\'\nuci set network.wan.username=\'990003835168\'\nuci set network.wan.password=\'k5k4t5b6\'\nuci set network.wan6.device=\'@wan\'\nuci set network.wan6.norelease=\'1\'\nuci set network.wan6.sourcefilter=\'0\'\nuci set dhcp.lan.ra=\'server\'\nuci set dhcp.lan.ra_default=\'1\'\nuci set dhcp.lan.ra_flags=\'none\'\nuci commit network\n\/etc\/init.d\/network restart\n" $SET_NETWROK
@@ -13,7 +19,8 @@ if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
   	sed -i "/exit 0/iuci set luci.main.lang=\'en\'\nuci commit luci\n" $SET_NETWROK
 	# Download remote configuration file and overwrite local configuration
 	curl -H "Authorization: token $GH_TOKEN" \
-     -L "https://raw.githubusercontent.com/qqsir-dev/config/main/ddns-go/home/ddns-go-config.yaml" \
+     -H "Accept: application/vnd.github.v3.raw" \
+     -L "https://api.github.com/repos/qqsir-dev/config/contents/ddns-go/home/ddns-go-config.yaml?ref=main" \
      -o "package/base-files/files/etc/ddns-go-config.yaml"
   	sed -i "/exit 0/icp \/etc\/ddns-go-config.yaml \/etc\/ddns-go\/ddns-go-config.yaml\nuci set ddns-go.config.enabled=\'1\'\nuci commit ddns-go\n\/etc\/init.d\/service ddns-go start\n" $SET_NETWROK
 	echo "$WRT_CONFIG - $WRT_IP SET"
@@ -27,7 +34,8 @@ if echo "$WRT_CONFIG" | grep -Eiq "68"; then
 	sed -i "/exit 0/iuci add firewall redirect\nuci set firewall.@redirect[0].target=\'DNAT\'\nuci set firewall.@redirect[0].src=\'wan\'\nuci set firewall.@redirect[0].dest=\'lan\'\nuci set firewall.@redirect[0].proto=\'tcp udp\'\nuci set firewall.@redirect[0].src_dport=\'8098\'\nuci set firewall.@redirect[0].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[0].dest_port=\'80\'\nuci set firewall.@redirect[0].name=\'Router\'\nuci add firewall redirect\nuci set firewall.@redirect[1].target=\'DNAT\'\nuci set firewall.@redirect[1].src=\'wan\'\nuci set firewall.@redirect[1].dest=\'lan\'\nuci set firewall.@redirect[1].proto=\'tcp udp\'\nuci set firewall.@redirect[1].src_dport=\'8043\'\nuci set firewall.@redirect[1].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[1].dest_port=\'443\'\nuci set firewall.@redirect[1].name=\'Router\'\nuci add firewall redirect\nuci set firewall.@redirect[12].dest=\'lan\'\nuci set firewall.@redirect[12].target=\'DNAT\'\nuci set firewall.@redirect[12].name=\'IPV6\'\nuci set firewall.@redirect[12].family=\'ipv6\'\nuci set firewall.@redirect[12].proto=\'tcp\' \'udp\' \'icmp\'\nuci set firewall.@redirect[12].src=\'wan\'\nuci set firewall.@redirect[12].src_dport=\'0-65535\'\nuci commit firewall\n" $SET_NETWROK
  	# Download remote configuration file and overwrite local configuration
 	curl -H "Authorization: token $GH_TOKEN" \
-     -L "https://raw.githubusercontent.com/qqsir-dev/config/main/ddns-go/fhome/ddns-go-config.yaml" \
+     -H "Accept: application/vnd.github.v3.raw" \
+     -L "https://api.github.com/repos/qqsir-dev/config/contents/ddns-go/fhome/ddns-go-config.yaml?ref=main" \
      -o "package/base-files/files/etc/ddns-go-config.yaml"
  	sed -i "/exit 0/icp \/etc\/ddns-go-config.yaml \/etc\/ddns-go\/ddns-go-config.yaml\nuci set ddns-go.config.enabled=\'1\'\nuci commit ddns-go\n\/etc\/init.d\/service ddns-go start\n" $SET_NETWROK
  	echo "$WRT_CONFIG - $WRT_IP SET"
