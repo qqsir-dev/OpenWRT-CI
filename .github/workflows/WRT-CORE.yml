@@ -42,7 +42,6 @@ on:
         type: string
 
 env:
-  GH_TOKEN: ${{ secrets.GH_TOKEN }}
   GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
   WRT_CONFIG: ${{inputs.WRT_CONFIG}}
   WRT_THEME: ${{inputs.WRT_THEME}}
@@ -160,6 +159,8 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
       - name: Custom Settings
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           cd ./wrt/
 
