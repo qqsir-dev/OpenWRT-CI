@@ -63,3 +63,6 @@ jobs:
       WRT_PACKAGE: ${{inputs.PACKAGE}}
       #仅输出配置文件
       WRT_TEST: ${{inputs.TEST}}
+    
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
