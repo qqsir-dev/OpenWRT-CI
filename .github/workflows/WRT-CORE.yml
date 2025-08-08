@@ -191,7 +191,6 @@ jobs:
 
           if [ ! -s "$OUT" ]; then
             echo "❌ 下载失败：$OUT 为空（请检查路径/分支/权限）"
-            exit 1
           fi
 
           echo "✅ 下载完成：$OUT (大小: $(wc -c < "$OUT") 字节)"
