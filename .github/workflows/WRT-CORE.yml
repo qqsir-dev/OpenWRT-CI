@@ -165,8 +165,8 @@ jobs:
           cd ./wrt/
           set -euo pipefail
           if [ -z "${GH_TOKEN:-}" ]; then
-            echo "❌ GH_TOKEN 未设置，无法访问私有仓库 qqsir-dev/config"
-            echo "请在本仓库 Settings → Secrets → Actions 添加 GH_TOKEN（PAT，Contents: Read）"
+            echo "❌ GH_TOKEN not set, unable to access private repository qqsir-dev/config"
+            echo "Please add GH_TOKEN in Settings → Secrets → Actions in this repository（PAT，Contents: Read）"
             exit 1
           fi
 
@@ -178,7 +178,7 @@ jobs:
           elif echo "$WRT_CONFIG" | grep -Eiq "68"; then
             FILE_PATH="ddns-go/fhome/ddns-go-config.yaml"
           else
-            echo "当前 WRT_CONFIG=$WRT_CONFIG 不需要下载私有配置，跳过"
+            echo "The current WRT_CONFIG=$WRT_CONFIG does not require downloading private configuration, skip"
             exit 0
           fi
 
@@ -186,7 +186,7 @@ jobs:
 
           mkdir -p "$(dirname "$OUT")"
 
-          echo "➡️ 通过 GitHub API 下载私有文件：${REPO}@${REF}:${FILE_PATH}"
+          echo "➡️ Download private files through GitHub API：${REPO}@${REF}:${FILE_PATH}"
           curl -fsSL \
             -H "Authorization: token ${GH_TOKEN}" \
             -H "Accept: application/vnd.github.v3.raw" \
@@ -194,11 +194,11 @@ jobs:
             -o "$OUT"
 
           if [ ! -s "$OUT" ]; then
-            echo "❌ 下载失败：$OUT 为空（请检查路径/分支/权限）"
+            echo "❌ Download failed: $OUT is empty (please check path/branch/permissions)"
             exit 1
           fi
 
-          echo "✅ 下载完成：$OUT (大小: $(wc -c < "$OUT") 字节)"
+          echo "✅ Download completed：$OUT (Size: $(wc -c < "$OUT") Byte)"
 
       
       - name: Custom Settings
