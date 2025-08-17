@@ -97,3 +97,48 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 		echo "qualcommax set up nowifi successfully!"
 	fi
 fi
+echo "🔧 正在检查并修复 tmp/.config-package.in 中的递归依赖..."
+
+CONFIG_FILE="tmp/.config-package.in"
+
+if [ -f "$CONFIG_FILE" ]; then
+    awk '
+      /symbol .* depends on / {
+        split($0, a, " ");
+        depends[a[2]] = a[6];
+        depends_line[a[2]] = NR;
+        lines[NR] = $0;
+        next;
+      }
+      /symbol .* is selected by / {
+        split($0, a, " ");
+        selects[a[2]] = a[6];
+        selects_line[a[2]] = NR;
+        lines[NR] = $0;
+        next;
+      }
+      {
+        lines[NR] = $0;
+      }
+      END {
+        for (sym in depends) {
+          if (selects[sym] == depends[sym]) {
+            line_num = selects_line[sym];
+            print "# " lines[line_num];
+          } else {
+            print lines[depends_line[sym]];
+          }
+        }
+        for (i = 1; i <= NR; i++) {
+          if (!(i in depends_line) && !(i in selects_line)) {
+            print lines[i];
+          }
+        }
+      }
+    ' "$CONFIG_FILE" > "$CONFIG_FILE.fixed"
+
+    mv "$CONFIG_FILE.fixed" "$CONFIG_FILE"
+    echo "✅ 已修复递归依赖错误。"
+else
+    echo "⚠️ 未找到文件：$CONFIG_FILE，跳过修复。"
+fi
