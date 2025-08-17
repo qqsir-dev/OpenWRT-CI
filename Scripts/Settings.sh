@@ -97,9 +97,10 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 		echo "qualcommax set up nowifi successfully!"
 	fi
 fi
-echo "🔧 正在检查并修复 tmp/.config-package.in 中的递归依赖..."
 
-CONFIG_FILE="tmp/.config-package.in"
+echo "🔧 正在检查并修复 ./tmp/.config-package 中的递归依赖..."
+
+CONFIG_FILE="./tmp/.config-package"
 
 if [ -f "$CONFIG_FILE" ]; then
     awk '
