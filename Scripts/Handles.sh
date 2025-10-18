@@ -36,7 +36,7 @@ if [ -d *"OpenClash"* ]; then
 	FILE_PATTERN="mihomo-linux-$CORE_TYPE-alpha-smart.*\\.gz"
 	
 	# 获取最新的预发布的Smart核心版本信息
-	echo "正在获取最新预发布版本信息..."
+	echo "正在获取OpenClash Smart core最新预发布版本信息..."
 	RELEASE_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5")
 	
 	# 提取包含所需资源文件的最新预发布版本资源信息
