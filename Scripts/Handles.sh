@@ -25,10 +25,39 @@ if [ -d *"homeproxy"* ]; then
 fi
 
 # 预置OpenClash内核和数据
-# if [ -d *"openclash"* ]; then
+if [ -d *"openclash"* ]; then
 # 	CORE_VER="https://raw.githubusercontent.com/vernesong/OpenClash/core/dev/core_version"
-# 	CORE_TYPE=$(echo $WRT_CONFIG | grep -Eiq "64|86" && echo "amd64" || echo "arm64")
+	CORE_TYPE=$(echo $WRT_CONFIG | grep -Eiq "64|86" && echo "amd64" || echo "arm64")
 # 	CORE_TUN_VER=$(curl -sL $CORE_VER | sed -n "2{s/\r$//;p;q}")
+
+	# 设置仓库信息
+	OWNER="vernesong"
+	REPO="mihomo"
+	FILE_PATTERN="mihomo-linux-$CORE_TYPE-alpha-smart.*\\.gz"
+	
+	# 获取最新的预发布版本信息
+	echo "正在获取最新预发布版本信息..."
+	RELEASE_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5")
+	
+	# 提取包含所需资源文件的最新预发布版本资源信息
+	ASSET_URL=$(echo "$RELEASE_JSON" | jq -r --arg pattern "$FILE_PATTERN" \
+	    '.[] | select(.prerelease == true) | .assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n1)
+	
+	if [ -n "$ASSET_URL" ] && [ "$ASSET_URL" != "null" ]; then
+	    echo "找到文件下载链接: $ASSET_URL"
+	    FILENAME=$(basename "$ASSET_URL")
+	    echo "文件名: $FILENAME"
+	    
+	    # 下载文件 (可根据需要取消以下注释)
+	    # wget -O "/tmp/$FILENAME" "$ASSET_URL"
+	    # echo "文件已下载到: /tmp/$FILENAME"
+	else
+	    echo "未找到匹配的预发布资源文件。"
+	    echo "请确认: "
+	    echo "  1. 项目 $OWNER/$REPO 是否存在包含 '$FILE_PATTERN' 文件的预发布版本。"
+	    echo "  2. 或者尝试直接列出所有资源文件检查:"
+	    echo "     curl -s 'https://api.github.com/repos/$OWNER/$REPO/releases?per_page=3' | jq -r '.[] | \"\\(.name):\", (.assets[] | \"  \\(.name)\")')'"
+	fi
 
 # 	CORE_DEV="https://github.com/vernesong/OpenClash/raw/core/dev/dev/clash-linux-$CORE_TYPE.tar.gz"
 # 	CORE_MATE="https://github.com/vernesong/OpenClash/raw/core/dev/meta/clash-linux-$CORE_TYPE.tar.gz"
@@ -38,22 +67,22 @@ fi
 # 	GEO_SITE="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geosite.dat"
 # 	GEO_IP="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geoip.dat"
 
-# 	cd ./luci-app-openclash/root/etc/openclash/
-
+	cd ./luci-app-openclash/root/etc/openclash/
+	curl -sL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin && echo "OpenClash s martModel.bin done!"
 # 	curl -sL -o Country.mmdb $GEO_MMDB && echo "OpenClash Country.mmdb done!"
 # 	curl -sL -o GeoSite.dat $GEO_SITE && echo "OpenClash GeoSite.dat done!"
 # 	curl -sL -o GeoIP.dat $GEO_IP && echo "OpenClash GeoIP.dat done!"
 
-# 	mkdir ./core/ && cd ./core/
-
+	mkdir ./core/ && cd ./core/
+	curl -sL -o $FILENAME $ASSET_URL && echo "OpenClash smart core done!"
 # 	curl -sL -o meta.tar.gz $CORE_MATE && tar -zxf meta.tar.gz && mv -f clash clash_meta && echo "OpenClash meta done!"
 # 	curl -sL -o tun.gz $CORE_TUN && gzip -d tun.gz && mv -f tun clash_tun && echo "OpenClash tun done!"
 # 	curl -sL -o dev.tar.gz $CORE_DEV && tar -zxf dev.tar.gz && echo "OpenClash dev done!"
 
-# 	chmod +x ./* && rm -rf ./*.gz
+	chmod +x ./* && rm -rf ./*.gz
 
 # 	cd $PKG_PATH && echo "OpenClash core and GEO data has been updated!"
-# fi
+fi
 
 #修改argon主题字体和颜色
 if [ -d *"luci-theme-argon"* ]; then
