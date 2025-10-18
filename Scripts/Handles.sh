@@ -68,7 +68,7 @@ if [ -d *"OpenClash"* ]; then
 # 	GEO_IP="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geoip.dat"
 
 	cd ./OpenClash/luci-app-openclash/root/etc/openclash/
-	curl -sL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin && echo "OpenClash smart Model.bin done!"
+	curl -sL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin && echo "OpenClash Model.bin done!"
 # 	curl -sL -o Country.mmdb $GEO_MMDB && echo "OpenClash Country.mmdb done!"
 # 	curl -sL -o GeoSite.dat $GEO_SITE && echo "OpenClash GeoSite.dat done!"
 # 	curl -sL -o GeoIP.dat $GEO_IP && echo "OpenClash GeoIP.dat done!"
@@ -81,7 +81,7 @@ if [ -d *"OpenClash"* ]; then
 
 	chmod +x ./* && rm -rf ./*.gz
 
-# 	cd $PKG_PATH && echo "OpenClash core and GEO data has been updated!"
+	cd $PKG_PATH && echo "OpenClash smart core and Model data has been updated!"
 fi
 
 #修改argon主题字体和颜色
