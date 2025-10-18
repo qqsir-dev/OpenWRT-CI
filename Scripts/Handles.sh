@@ -67,8 +67,8 @@ if [ -d *"OpenClash"* ]; then
 # 	GEO_SITE="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geosite.dat"
 # 	GEO_IP="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geoip.dat"
 
-	cd ./luci-app-openclash/root/etc/openclash/
-	curl -sL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin && echo "OpenClash s martModel.bin done!"
+	cd ./OpenClash/luci-app-openclash/root/etc/openclash/
+	curl -sL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin && echo "OpenClash smart Model.bin done!"
 # 	curl -sL -o Country.mmdb $GEO_MMDB && echo "OpenClash Country.mmdb done!"
 # 	curl -sL -o GeoSite.dat $GEO_SITE && echo "OpenClash GeoSite.dat done!"
 # 	curl -sL -o GeoIP.dat $GEO_IP && echo "OpenClash GeoIP.dat done!"
