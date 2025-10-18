@@ -35,7 +35,7 @@ if [ -d *"OpenClash"* ]; then
 	REPO="mihomo"
 	FILE_PATTERN="mihomo-linux-$CORE_TYPE-alpha-smart.*\\.gz"
 	
-	# 获取最新的预发布版本信息
+	# 获取最新的预发布的Smart核心版本信息
 	echo "正在获取最新预发布版本信息..."
 	RELEASE_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5")
 	
@@ -44,13 +44,10 @@ if [ -d *"OpenClash"* ]; then
 	    '.[] | select(.prerelease == true) | .assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n1)
 	
 	if [ -n "$ASSET_URL" ] && [ "$ASSET_URL" != "null" ]; then
-	    echo "找到文件下载链接: $ASSET_URL"
+	    echo "找到Smart Core文件下载链接: $ASSET_URL"
 	    FILENAME=$(basename "$ASSET_URL")
 	    echo "文件名: $FILENAME"
 	    
-	    # 下载文件 (可根据需要取消以下注释)
-	    # wget -O "/tmp/$FILENAME" "$ASSET_URL"
-	    # echo "文件已下载到: /tmp/$FILENAME"
 	else
 	    echo "未找到匹配的预发布资源文件。"
 	    echo "请确认: "
@@ -59,29 +56,45 @@ if [ -d *"OpenClash"* ]; then
 	    echo "     curl -s 'https://api.github.com/repos/$OWNER/$REPO/releases?per_page=3' | jq -r '.[] | \"\\(.name):\", (.assets[] | \"  \\(.name)\")')'"
 	fi
 
-# 	CORE_DEV="https://github.com/vernesong/OpenClash/raw/core/dev/dev/clash-linux-$CORE_TYPE.tar.gz"
-# 	CORE_MATE="https://github.com/vernesong/OpenClash/raw/core/dev/meta/clash-linux-$CORE_TYPE.tar.gz"
-# 	CORE_TUN="https://github.com/vernesong/OpenClash/raw/core/dev/premium/clash-linux-$CORE_TYPE-$CORE_TUN_VER.gz"
+	# 获取最新发布的Country.mmdb下载链接
+	LATEST_MMDBURL=$(curl -s "https://api.github.com/repos/alecthw/mmdb_china_ip_list/releases/latest" | \
+	    grep -o '"browser_download_url": *"[^"]*Country\.mmdb"' | \
+	    cut -d'"' -f4)
+	
+	if [ -n "$LATEST_MMDBURL" ]; then
+	    echo "最新MMDB文件链接: $LATEST_MMDBURL"
+	    GEO_MMDB="$LATEST_MMDBURL"
 
-# 	GEO_MMDB="https://github.com/alecthw/mmdb_china_ip_list/raw/release/lite/Country.mmdb"
-# 	GEO_SITE="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geosite.dat"
+	else
+	    echo "未找到Country.mmdb文件"
+	fi
+	# 获取最新发布的geosite.dat下载链接
+	LATEST_GEOURL=$(curl -s "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest" | \
+	    grep -o '"browser_download_url": *"[^"]*geosite\.dat"' | \
+	    cut -d'"' -f4)
+	
+	if [ -n "$LATEST_GEOURL" ]; then
+	    echo "最新GEOSITE文件链接: $LATEST_GEOURL"
+	    GEO_SITE="$LATEST_GEOURL"
+
+	else
+	    echo "未找到geosite.dat文件"
+	fi
+
 # 	GEO_IP="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geoip.dat"
 
 	cd ./OpenClash/luci-app-openclash/root/etc/openclash/
 	curl -sL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin && echo "OpenClash Model.bin done!"
-# 	curl -sL -o Country.mmdb $GEO_MMDB && echo "OpenClash Country.mmdb done!"
-# 	curl -sL -o GeoSite.dat $GEO_SITE && echo "OpenClash GeoSite.dat done!"
+	curl -sL -o Country.mmdb $GEO_MMDB && echo "OpenClash Country.mmdb done!"
+	curl -sL -o GeoSite.dat $GEO_SITE && echo "OpenClash GeoSite.dat done!"
 # 	curl -sL -o GeoIP.dat $GEO_IP && echo "OpenClash GeoIP.dat done!"
 
 	mkdir ./core/ && cd ./core/
 	curl -sL -o $FILENAME $ASSET_URL && echo "OpenClash smart core done!"
-# 	curl -sL -o meta.tar.gz $CORE_MATE && tar -zxf meta.tar.gz && mv -f clash clash_meta && echo "OpenClash meta done!"
-# 	curl -sL -o tun.gz $CORE_TUN && gzip -d tun.gz && mv -f tun clash_tun && echo "OpenClash tun done!"
-# 	curl -sL -o dev.tar.gz $CORE_DEV && tar -zxf dev.tar.gz && echo "OpenClash dev done!"
 
 	chmod +x ./* && rm -rf ./*.gz
 
-	cd $PKG_PATH && echo "OpenClash smart core and Model data has been updated!"
+	cd $PKG_PATH && echo "OpenClash smart core, Model and data have been updated!"
 fi
 
 #修改argon主题字体和颜色
