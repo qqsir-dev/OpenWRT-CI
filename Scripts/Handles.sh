@@ -90,9 +90,16 @@ if [ -d *"OpenClash"* ]; then
 # 	curl -sL -o GeoIP.dat $GEO_IP && echo "OpenClash GeoIP.dat done!"
 
 	mkdir ./core/ && cd ./core/
-	curl -sL -o $FILENAME $ASSET_URL && echo "OpenClash smart core done!"
-
-	chmod +x ./* && rm -rf ./*.gz
+	curl -sL -o $FILENAME $ASSET_URL
+	gunzip -c "$FILENAME" > clash_meta
+	if [ $? -eq 0 ]; then
+	    echo "OpenClash smart core done!"
+	    chmod +x clash_meta
+	    rm -f "$FILENAME"
+	else
+	    echo "解压失败!"
+	    exit 1
+	fi
 
 	cd $PKG_PATH && echo "OpenClash smart core, Model and data have been updated!"
 fi
