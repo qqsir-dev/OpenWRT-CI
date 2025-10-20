@@ -24,7 +24,7 @@ if [ -d *"homeproxy"* ]; then
 	cd $PKG_PATH && echo "homeproxy date has been updated!"
 fi
 
-# 预置OpenClash内核和数据
+# 预置OpenClash smart内核和数据
 if [ -d *"OpenClash"* ]; then
 # 	CORE_VER="https://raw.githubusercontent.com/vernesong/OpenClash/core/dev/core_version"
 	CORE_TYPE=$(echo $WRT_CONFIG | grep -Eiq "64|86" && echo "amd64" || echo "arm64")
@@ -36,7 +36,7 @@ if [ -d *"OpenClash"* ]; then
 	FILE_PATTERN="mihomo-linux-$CORE_TYPE-alpha-smart.*\\.gz"
 	
 	# 获取最新的预发布的Smart核心版本信息
-	echo "正在获取OpenClash Smart core最新预发布版本信息..."
+	echo "Retrieving the latest pre-release version information for OpenClash Smart Core..."
 	RELEASE_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5")
 	
 	# 提取包含所需资源文件的最新预发布版本资源信息
@@ -44,15 +44,13 @@ if [ -d *"OpenClash"* ]; then
 	    '.[] | select(.prerelease == true) | .assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n1)
 	
 	if [ -n "$ASSET_URL" ] && [ "$ASSET_URL" != "null" ]; then
-	    echo "找到Smart Core文件下载链接: $ASSET_URL"
+	    echo "Find the Smart Core file download link: $ASSET_URL"
 	    FILENAME=$(basename "$ASSET_URL")
-	    echo "文件名: $FILENAME"
+	    echo "File Name: $FILENAME"
 	    
 	else
-	    echo "未找到匹配的预发布资源文件。"
-	    echo "请确认: "
-	    echo "  1. 项目 $OWNER/$REPO 是否存在包含 '$FILE_PATTERN' 文件的预发布版本。"
-	    echo "  2. 或者尝试直接列出所有资源文件检查:"
+	    echo "No matching pre-release resource file found."
+	    echo "Attempt to directly list all resource files for inspection:"
 	    echo "     curl -s 'https://api.github.com/repos/$OWNER/$REPO/releases?per_page=3' | jq -r '.[] | \"\\(.name):\", (.assets[] | \"  \\(.name)\")')'"
 	fi
 
@@ -62,11 +60,11 @@ if [ -d *"OpenClash"* ]; then
 	    cut -d'"' -f4)
 	
 	if [ -n "$LATEST_MMDBURL" ]; then
-	    echo "最新MMDB文件链接: $LATEST_MMDBURL"
+	    echo "The latest MMDB link: $LATEST_MMDBURL"
 	    GEO_MMDB="$LATEST_MMDBURL"
 
 	else
-	    echo "未找到Country.mmdb文件"
+	    echo "No matching Country.mmdb found."
 	fi
 	# 获取最新发布的geosite.dat下载链接
 	LATEST_GEOURL=$(curl -s "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest" | \
@@ -74,11 +72,11 @@ if [ -d *"OpenClash"* ]; then
 	    cut -d'"' -f4)
 	
 	if [ -n "$LATEST_GEOURL" ]; then
-	    echo "最新GEOSITE文件链接: $LATEST_GEOURL"
+	    echo "The Latest GEOSITE link: $LATEST_GEOURL"
 	    GEO_SITE="$LATEST_GEOURL"
 
 	else
-	    echo "未找到geosite.dat文件"
+	    echo "No matching geosite.dat found."
 	fi
 
 # 	GEO_IP="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geoip.dat"
@@ -97,7 +95,7 @@ if [ -d *"OpenClash"* ]; then
 	    chmod +x clash_meta
 	    rm -f "$FILENAME"
 	else
-	    echo "解压失败!"
+	    echo "Decompression failed!"
 	    exit 1
 	fi
 
