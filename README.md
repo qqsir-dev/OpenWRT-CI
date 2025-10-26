@@ -14,6 +14,7 @@ https://github.com/VIKINGYFY/immortalwrt.git
 固件信息里的时间为编译开始的时间，方便核对上游源码提交时间。
 
 ROCKCHIP系列、X86系列,<H1>目前该项目的配置均为自己使用，欢迎fork但不做任何保证。
+<H1>请注意，本项目OpenClash目前使用smart内核！
 
 # 目录简要说明：
 
