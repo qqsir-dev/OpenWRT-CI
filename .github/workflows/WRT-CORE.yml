@@ -202,7 +202,7 @@ jobs:
             exit 1
           fi
 
-          echo "✅ File Path:${FILE_PATH} Download completed：$OUT (Size: $(wc -c < "$OUT") Byte)"
+          echo "✅ ${FILE_PATH} Download completed to：$OUT (Size: $(wc -c < "$OUT") Byte)"
 
       
       - name: Custom Settings
