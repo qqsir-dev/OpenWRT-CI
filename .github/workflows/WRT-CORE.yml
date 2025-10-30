@@ -162,7 +162,7 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
-      - name: Download private config file (from qqsir-dev/config)
+      - name: Download private config file
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
@@ -190,7 +190,7 @@ jobs:
 
           mkdir -p "$(dirname "$OUT")"
 
-          echo "➡️ Download private files through GitHub API：${REPO}@${REF}:${FILE_PATH}"
+          # echo "➡️ Download private files through GitHub API：${REPO}@${REF}:${FILE_PATH}"
           curl -fsSL \
             -H "Authorization: token ${GH_TOKEN}" \
             -H "Accept: application/vnd.github.v3.raw" \
@@ -202,7 +202,7 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Download completed：$OUT (Size: $(wc -c < "$OUT") Byte)"
+          echo "✅ File Path:${FILE_PATH} Download completed：$OUT (Size: $(wc -c < "$OUT") Byte)"
 
       
       - name: Custom Settings
