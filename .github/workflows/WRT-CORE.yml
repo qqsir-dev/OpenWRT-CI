@@ -275,8 +275,7 @@ jobs:
           tag_name: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_BRANCH}}-${{env.WRT_DATE}}
           files: ./wrt/upload/*.*
           body: |
-            这是个平台固件包，内含多个设备！
-
+            ${{ contains(env.WRT_CONFIG, 'ROCK') && '这是个平台固件包，内含多个设备！\n' || '' }}
             全系带开源硬件加速
 
             源码：${{env.WRT_REPO}}
