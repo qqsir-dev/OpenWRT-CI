@@ -52,6 +52,7 @@ if [ -d *"OpenClash"* ]; then
 	    echo "No matching pre-release resource file found."
 	    echo "Attempt to directly list all resource files for inspection:"
 	    echo "     curl -s 'https://api.github.com/repos/$OWNER/$REPO/releases?per_page=3' | jq -r '.[] | \"\\(.name):\", (.assets[] | \"  \\(.name)\")')'"
+		exit 0
 	fi
 
 	# 获取最新发布的Country.mmdb下载链接
@@ -65,6 +66,7 @@ if [ -d *"OpenClash"* ]; then
 
 	else
 	    echo "No matching Country.mmdb found."
+		exit 0
 	fi
 	# 获取最新发布的geosite.dat下载链接
 	LATEST_GEOURL=$(curl -s "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest" | \
@@ -77,6 +79,7 @@ if [ -d *"OpenClash"* ]; then
 
 	else
 	    echo "No matching geosite.dat found."
+		exit 0
 	fi
 
 # 	GEO_IP="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geoip.dat"
@@ -96,7 +99,7 @@ if [ -d *"OpenClash"* ]; then
 	    rm -f "$FILENAME"
 	else
 	    echo "Decompression failed!"
-	    exit 1
+	    exit 0
 	fi
 
 	cd $PKG_PATH && echo "OpenClash smart core, Model and data have been updated!"
