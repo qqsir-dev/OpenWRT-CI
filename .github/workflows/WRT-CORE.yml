@@ -78,7 +78,7 @@ jobs:
           sudo rm -rf /opt/ghc
           sudo rm -rf /usr/local/share/boost
           sudo -E apt-get -yqq clean
-          sudo -E apt-get -yqq install dos2unix python3-distutils python3-netifaces libfuse-dev
+          sudo -E apt-get -yqq install dos2unix python3-netifaces libfuse-dev
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
