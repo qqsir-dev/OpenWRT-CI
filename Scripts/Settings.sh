@@ -14,8 +14,8 @@ if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
 	echo "$WRT_CONFIG - $WRT_IP SET"
 fi
 if echo "$WRT_CONFIG" | grep -Eiq "68"; then
-	sed -i "/exit 0/iuci set network.wan.device=\'eth3\'\nuci set network.wan.proto=\'pppoe\'\nuci set network.wan.username=\'990001257663\'\nuci set network.wan.password=\'u6s3x4r8\'\nuci set network.@device[0].ports=\'eth0 eth1 eth2\'\nuci set dhcp.lan.ra=\'server\'\nuci set dhcp.lan.ra_default=\'1\'\nuci set dhcp.lan.ra_flags=\'none\'\nuci commit network\n\/etc\/init.d\/network restart\n" $SET_NETWROK
-	sed -i "/exit 0/iuci set dhcp.lan.start=\'150\'\nuci set dhcp.lan.limit=\'100\'\nuci add_list dhcp.lan.dhcp_option=\'6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76\'\nuci commit dhcp\n" $SET_NETWROK
+	sed -i "/exit 0/iuci set network.wan.device=\'eth3\'\nuci set network.wan.proto=\'pppoe\'\nuci set network.wan.username=\'990001257663\'\nuci set network.wan.password=\'u6s3x4r8\'\nuci set network.wan6.device=\'@wan\'\nuci set network.wan6.norelease=\'1\'\nuci set network.wan6.sourcefilter=\'0\'\nuci set network.@device[0].ports=\'eth0 eth1 eth2\'\nuci set dhcp.lan.ra=\'server\'\nuci set dhcp.lan.ra_default=\'1\'\nuci set dhcp.lan.ra_flags=\'none\'\nuci commit network\n\/etc\/init.d\/network restart\n" $SET_NETWROK
+	sed -i "/exit 0/iuci set dhcp.lan.start=\'150\'\nuci set dhcp.lan.limit=\'100\'\nuci add_list dhcp.lan.dhcp_option=\'6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76\'\nuci commit dhcp\nsleep 15\nifdown wan6\nsleep 15\nifup wan6\n" $SET_NETWROK
  	# MyOwn
 	# sed -i "/exit 0/iuci set ddns.aliyun=\'service\'\nuci set ddns.aliyun.service_name=\'aliyun.com\'\nuci set ddns.aliyun.enabled=\'1\'\nuci set ddns.aliyun.lookup_host=\'fhome.bmwlive.club\'\nuci set ddns.aliyun.domain=\'fhome.bmwlive.club\'\nuci set ddns.aliyun.username=\'LTAIHiwKt52WZmKg\'\nuci set ddns.aliyun.password=\'Wlxr4IEL1IQKPtXaBlhVlGWqefF8BK\'\nuci set uci set ddns.aliyun.ip_source=\'web\'\nuci set ddns.aliyun.ip_url=\'http://ip.3322.net\'\nuci set ddns.aliyun.bind_network=\'wan\'\nuci commit ddns\n" $SET_NETWROK
  	# Firewall4 PortForward Configuration
@@ -24,8 +24,8 @@ if echo "$WRT_CONFIG" | grep -Eiq "68"; then
  	echo "$WRT_CONFIG - $WRT_IP SET"
 fi
 if echo "$WRT_CONFIG" | grep -Eiq "ROCK"; then
-	sed -i "/exit 0/iuci set network.lan.delegate=\'0\'\nuci commit network\n" $SET_NETWROK
-	sed -i "/exit 0/iuci set dhcp.lan.start=\'150\'\nuci set dhcp.lan.limit=\'100\'\nuci set dhcp.lan.ra=\'server\'\nuci set dhcp.lan.ra_default=\'1\'\nuci set dhcp.lan.ra_flags=\'none\'\nuci set dhcp.lan.dns_service=\'0\'\nuci add_list dhcp.lan.dhcp_option=\'6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76\'\nuci commit dhcp\n" $SET_NETWROK
+	sed -i "/exit 0/iuci set network.wan6.device=\'@wan\'\nuci set network.wan6.norelease=\'1\'\nuci set network.wan6.sourcefilter=\'0\'\nuci set network.lan.delegate=\'0\'\nuci commit network\n" $SET_NETWROK
+	sed -i "/exit 0/iuci set dhcp.lan.start=\'150\'\nuci set dhcp.lan.limit=\'100\'\nuci set dhcp.lan.ra=\'server\'\nuci set dhcp.lan.ra_default=\'1\'\nuci set dhcp.lan.ra_flags=\'none\'\nuci set dhcp.lan.dns_service=\'0\'\nuci add_list dhcp.lan.dhcp_option=\'6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76\'\nuci commit dhcp\nsleep 15\nifdown wan6\nsleep 15\nifup wan6\n" $SET_NETWROK
 	# Firewall4 PortForward Configuration
  	sed -i "/exit 0/iuci add firewall redirect\nuci set firewall.@redirect[0].target=\'DNAT\'\nuci set firewall.@redirect[0].src=\'wan\'\nuci set firewall.@redirect[0].dest=\'lan\'\nuci set firewall.@redirect[0].proto=\'tcp udp\'\nuci set firewall.@redirect[0].src_dport=\'8098\'\nuci set firewall.@redirect[0].dest_ip=\'$WRT_IP\'\nuci set firewall.@redirect[0].dest_port=\'80\'\nuci set firewall.@redirect[0].name=\'Router\'\nuci add firewall redirect\nuci set firewall.@redirect[1].dest=\'lan\'\nuci set firewall.@redirect[1].target=\'DNAT\'\nuci set firewall.@redirect[1].name=\'IPV6\'\nuci set firewall.@redirect[1].family=\'ipv6\'\nuci set firewall.@redirect[1].proto=\'tcp\' \'udp\' \'icmp\'\nuci set firewall.@redirect[1].src=\'wan\'\nuci set firewall.@redirect[1].src_dport=\'0-65535\'\nuci commit firewall\n" $SET_NETWROK
   	echo "$WRT_CONFIG - $WRT_IP SET"
