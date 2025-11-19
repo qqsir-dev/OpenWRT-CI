@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#移除luci-app-attendedsysupgrade
+sed -i "/attendedsysupgrade/d" $(find ./feeds/luci/collections/ -type f -name "Makefile")
 # Network Configuration
 SET_NETWROK="./package/base-files/files/etc/rc.local"
 
