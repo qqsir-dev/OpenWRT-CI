@@ -15,7 +15,7 @@ if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
   	sed -i "/exit 0/icp \/etc\/ddns-go-config.yaml \/etc\/ddns-go\/ddns-go-config.yaml\nuci set ddns-go.config.enabled=\'1\'\nuci commit ddns-go\n\/etc\/init.d\/service ddns-go start\n" $SET_NETWROK
 	echo "$WRT_CONFIG - $WRT_IP SET"
 fi
-if echo "$WRT_CONFIG" | grep -Eiq "68"; then
+if echo "$WRT_CONFIG" | grep -Eiq "R68"; then
 	sed -i "/exit 0/iuci set network.wan.device=\'eth3\'\nuci set network.wan.proto=\'pppoe\'\nuci set network.wan.username=\'990001257663\'\nuci set network.wan.password=\'u6s3x4r8\'\nuci set network.@device[0].ports=\'eth0 eth1 eth2\'\nuci commit network\n\/etc\/init.d\/network restart\n" $SET_NETWROK
 	sed -i "/exit 0/iuci set dhcp.lan.start=\'150\'\nuci set dhcp.lan.limit=\'100\'\nuci add_list dhcp.lan.dhcp_option=\'6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76\'\nuci set dhcp.lan.ra=\'server\'\nuci set dhcp.lan.ndp=\'relay\'\nuci set dhcp.lan.dhcpv6=\'relay\'\nuci set dhcp.lan.ra_management=\'1\'\nuci set dhcp.lan.ra_default=\'1\'\nuci set dhcp.lan.master=\'1\'\nuci set dhcp.lan.ra_flags=\'none\'\nuci commit dhcp\n\/etc\/init.d\/odhcpd restart\n" $SET_NETWROK
  	# MyOwn
