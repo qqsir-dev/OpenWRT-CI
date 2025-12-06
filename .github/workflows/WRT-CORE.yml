@@ -154,29 +154,41 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Patch missing deps in Makefiles
+      - name: Update feeds and patch missing deps
         run: |
           cd ./wrt/
-
-          # 2) Show all references (optional, won't fail the job)
-          grep -R "python3-distutils" package/ feeds/ || true
-          grep -R "python3-pysocks" package/ feeds/ || true
       
-          # 3) Replace python3-distutils -> python3 in all Makefiles under package/ and feeds/
-          find package feeds -type f -name "Makefile" -exec sed -i 's/python3-distutils/python3/g' {} +
+          # 1) Make sure feeds exist
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a || true
       
-          # 4) Replace python3-pysocks -> python3
-          find package feeds -type f -name "Makefile" -exec sed -i 's/python3-pysocks/python3/g' {} +
-          
-          echo "Before patch:"
-          grep -nE 'kmod-mhi-wwan|boost-system' package/QModem/application/qmodem/Makefile package/luci-app-qbittorrent/rblibtorrent/Makefile || true
+          echo "==== BEFORE PATCH ===="
+          grep -R "python3-distutils" . || true
+          grep -R "python3-pysocks" . || true
+          grep -R "boost-system" . || true
+          grep -R "kmod-mhi-wwan" . || true
       
-          # Remove the bad deps
-          sed -i 's/kmod-mhi-wwan//g' package/QModem/application/qmodem/Makefile
-          sed -i 's/boost-system//g' package/luci-app-qbittorrent/rblibtorrent/Makefile
+          # 2) Patch ALL Makefiles under the tree
+          #    - python3-distutils    -> python3
+          #    - python3-pysocks      -> python3
+          #    - drop boost-system
+          #    - drop kmod-mhi-wwan
+          find . -type f -name "Makefile" -exec \
+            sed -i \
+              -e 's/python3-distutils/python3/g' \
+              -e 's/python3-pysocks/python3/g' \
+              -e 's/boost-system//g' \
+              -e 's/kmod-mhi-wwan//g' \
+            {} +
       
-          echo "After patch:"
-          grep -nE 'kmod-mhi-wwan|boost-system' package/QModem/application/qmodem/Makefile package/luci-app-qbittorrent/rblibtorrent/Makefile || echo "OK, no matches"
+          echo "==== AFTER PATCH ===="
+          grep -R "python3-distutils" . || echo "no python3-distutils"
+          grep -R "python3-pysocks" . || echo "no python3-pysocks"
+          grep -R "boost-system" . || echo "no boost-system"
+          grep -R "kmod-mhi-wwan" . || echo "no kmod-mhi-wwan"
+      
+          # 3) Rebuild package info AFTER patching
+          ./scripts/feeds install -a
       
       - name: Custom Packages
         run: |
