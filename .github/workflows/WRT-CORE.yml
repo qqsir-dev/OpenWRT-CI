@@ -169,18 +169,14 @@ jobs:
           find package feeds -type f -name "Makefile" -exec sed -i 's/python3-pysocks/python3/g' {} +
           
           echo "Before patch:"
-          grep -nE 'kmod-mhi-wwan|boost-system' \
-            package/QModem/application/qmodem/Makefile \
-            package/luci-app-qbittorrent/rblibtorrent/Makefile || true
+          grep -nE 'kmod-mhi-wwan|boost-system' package/QModem/application/qmodem/Makefile package/luci-app-qbittorrent/rblibtorrent/Makefile || true
       
           # Remove the bad deps
           sed -i 's/kmod-mhi-wwan//g' package/QModem/application/qmodem/Makefile
           sed -i 's/boost-system//g' package/luci-app-qbittorrent/rblibtorrent/Makefile
       
           echo "After patch:"
-          grep -nE 'kmod-mhi-wwan|boost-system' \
-            package/QModem/application/qmodem/Makefile \
-            package/luci-app-qbittorrent/rblibtorrent/Makefile || echo "OK, no matches"
+          grep -nE 'kmod-mhi-wwan|boost-system' package/QModem/application/qmodem/Makefile package/luci-app-qbittorrent/rblibtorrent/Makefile || echo "OK, no matches"
       
       - name: Custom Packages
         run: |
