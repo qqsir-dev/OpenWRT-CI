@@ -151,7 +151,11 @@ jobs:
       - name: Update Feeds
         run: |
           cd ./wrt/
-
+          # Dry-run first to see what will change
+          grep -R "python3-distutils" package/ feeds/
+          # Then replace in all Makefiles under package/ and feeds/
+          find package feeds -type f -name "Makefile" -exec \sed -i 's/python3-distutils/python3/g' {} +
+          
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
