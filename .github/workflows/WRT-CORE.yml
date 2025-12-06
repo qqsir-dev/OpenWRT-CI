@@ -157,11 +157,15 @@ jobs:
       
           # 2) Show all references (optional, won't fail the job)
           grep -R "python3-distutils" package/ feeds/ || true
+          grep -R "python3-pysocks" package/ feeds/ || true
       
           # 3) Replace python3-distutils -> python3 in all Makefiles under package/ and feeds/
           find package feeds -type f -name "Makefile" -exec sed -i 's/python3-distutils/python3/g' {} +
       
-          # 4) (Optional) re-run feeds to make sure everything is consistent
+          # 4) Replace python3-pysocks -> python3
+          find package feeds -type f -name "Makefile" -exec sed -i 's/python3-pysocks/python3/g' {} +
+          
+          # 5) (Optional) re-run feeds to make sure everything is consistent
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
