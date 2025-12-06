@@ -158,8 +158,6 @@ jobs:
           # 2) Show all references (optional, won't fail the job)
           grep -R "python3-distutils" package/ feeds/ || true
           grep -R "python3-pysocks" package/ feeds/ || true
-          grep -R "kmod-mhi-wwan" package/ feeds/ || true
-          grep -R "boost-system" package/ feeds/ || true
       
           # 3) Replace python3-distutils -> python3 in all Makefiles under package/ and feeds/
           find package feeds -type f -name "Makefile" -exec sed -i 's/python3-distutils/python3/g' {} +
@@ -167,14 +165,21 @@ jobs:
           # 4) Replace python3-pysocks -> python3
           find package feeds -type f -name "Makefile" -exec sed -i 's/python3-pysocks/python3/g' {} +
 
-          # 5) Strip kmod-mhi-wwan and boost-system from all Makefiles under package/ and feeds/
-          find package feeds -type f -name "Makefile" -exec sed -i -E 's/(^|\s)\+?kmod-mhi-wwan//g; s/(^|\s)\+?boost-system//g' {} +
-
-          echo "==== after sed ===="
-          grep -R "kmod-mhi-wwan" package/ feeds/ || true
-          grep -R "boost-system" package/ feeds/ || true
+          echo "Before patch:"
+          grep -nE 'kmod-mhi-wwan|boost-system' \
+            package/QModem/application/qmodem/Makefile \
+            package/luci-app-qbittorrent/rblibtorrent/Makefile || true
+      
+          # Remove the bad deps
+          sed -i 's/kmod-mhi-wwan//g' package/QModem/application/qmodem/Makefile
+          sed -i 's/boost-system//g' package/luci-app-qbittorrent/rblibtorrent/Makefile
+      
+          echo "After patch:"
+          grep -nE 'kmod-mhi-wwan|boost-system' \
+            package/QModem/application/qmodem/Makefile \
+            package/luci-app-qbittorrent/rblibtorrent/Makefile || echo "OK, no matches"
           
-          # 6) (Optional) re-run feeds to make sure everything is consistent
+          # 5) (Optional) re-run feeds to make sure everything is consistent
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
