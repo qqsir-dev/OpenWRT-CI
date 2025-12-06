@@ -151,10 +151,13 @@ jobs:
       - name: Update Feeds
         run: |
           cd ./wrt/
-          # 1) Ensure feeds/ exists
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-      
+
+      - name: Patch missing deps in Makefiles
+        run: |
+          cd ./wrt/
+
           # 2) Show all references (optional, won't fail the job)
           grep -R "python3-distutils" package/ feeds/ || true
           grep -R "python3-pysocks" package/ feeds/ || true
@@ -164,7 +167,7 @@ jobs:
       
           # 4) Replace python3-pysocks -> python3
           find package feeds -type f -name "Makefile" -exec sed -i 's/python3-pysocks/python3/g' {} +
-
+          
           echo "Before patch:"
           grep -nE 'kmod-mhi-wwan|boost-system' \
             package/QModem/application/qmodem/Makefile \
@@ -178,11 +181,7 @@ jobs:
           grep -nE 'kmod-mhi-wwan|boost-system' \
             package/QModem/application/qmodem/Makefile \
             package/luci-app-qbittorrent/rblibtorrent/Makefile || echo "OK, no matches"
-          
-          # 5) (Optional) re-run feeds to make sure everything is consistent
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
+      
       - name: Custom Packages
         run: |
           cd ./wrt/package/
