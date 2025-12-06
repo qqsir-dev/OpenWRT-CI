@@ -153,42 +153,6 @@ jobs:
           cd ./wrt/
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-
-      - name: Update feeds and patch missing deps
-        run: |
-          cd ./wrt/
-      
-          # 1) Make sure feeds exist
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a || true
-      
-          echo "==== BEFORE PATCH ===="
-          grep -R "python3-distutils" . || true
-          grep -R "python3-pysocks" . || true
-          grep -R "boost-system" . || true
-          grep -R "kmod-mhi-wwan" . || true
-      
-          # 2) Patch ALL Makefiles under the tree
-          #    - python3-distutils    -> python3
-          #    - python3-pysocks      -> python3
-          #    - drop boost-system
-          #    - drop kmod-mhi-wwan
-          find . -type f -name "Makefile" -exec \
-            sed -i \
-              -e 's/python3-distutils/python3/g' \
-              -e 's/python3-pysocks/python3/g' \
-              -e 's/boost-system//g' \
-              -e 's/kmod-mhi-wwan//g' \
-            {} +
-      
-          echo "==== AFTER PATCH ===="
-          grep -R "python3-distutils" . || echo "no python3-distutils"
-          grep -R "python3-pysocks" . || echo "no python3-pysocks"
-          grep -R "boost-system" . || echo "no boost-system"
-          grep -R "kmod-mhi-wwan" . || echo "no kmod-mhi-wwan"
-      
-          # 3) Rebuild package info AFTER patching
-          ./scripts/feeds install -a
       
       - name: Custom Packages
         run: |
