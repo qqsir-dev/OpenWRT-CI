@@ -171,7 +171,7 @@ jobs:
             ./wrt/staging_dir/tool*
 
             # 可选：host 端 build 目录（视磁盘空间情况）
-            ./wrt/build_dir/host*
+            #./wrt/build_dir/host*
 
       - name: Update Caches
         if: env.WRT_TEST != 'true'
