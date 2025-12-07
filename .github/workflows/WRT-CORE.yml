@@ -1,0 +1,398 @@
+name: WRT-CORE
+
+on:
+  workflow_call:
+    inputs:
+      WRT_CONFIG:
+        required: true
+        type: string
+      WRT_THEME:
+        required: true
+        type: string
+      WRT_NAME:
+        required: true
+        type: string
+      WRT_SSID:
+        required: true
+        type: string
+      WRT_WORD:
+        required: true
+        type: string
+      WRT_IP:
+        required: true
+        type: string
+      WRT_PW:
+        required: true
+        type: string
+      WRT_REPO:
+        required: true
+        type: string
+      WRT_BRANCH:
+        required: true
+        type: string
+      WRT_SOURCE:
+        required: true
+        type: string
+      WRT_PACKAGE:
+        required: false
+        type: string
+      WRT_TEST:
+        required: false
+        type: string
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  WRT_CONFIG: ${{ inputs.WRT_CONFIG }}
+  WRT_THEME: ${{ inputs.WRT_THEME }}
+  WRT_NAME: ${{ inputs.WRT_NAME }}
+  WRT_SSID: ${{ inputs.WRT_SSID }}
+  WRT_WORD: ${{ inputs.WRT_WORD }}
+  WRT_IP: ${{ inputs.WRT_IP }}
+  WRT_PW: ${{ inputs.WRT_PW }}
+  WRT_REPO: ${{ inputs.WRT_REPO }}
+  WRT_BRANCH: ${{ inputs.WRT_BRANCH }}
+  WRT_SOURCE: ${{ inputs.WRT_SOURCE }}
+  WRT_PACKAGE: ${{ inputs.WRT_PACKAGE }}
+  WRT_TEST: ${{ inputs.WRT_TEST }}
+
+  # ccache 相关（供 OpenWrt 使用）
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_COMPRESS: "1"
+  CCACHE_MAXSIZE: "2G"
+
+permissions:
+  contents: write
+
+jobs:
+  core:
+    name: ${{ inputs.WRT_SOURCE }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Projects
+        uses: actions/checkout@v4
+
+      - name: Initialization Environment
+        shell: bash
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          set -euo pipefail
+
+          echo ">>> Update apt index"
+          sudo -E apt-get update -yqq
+
+          echo ">>> Install basic packages"
+          sudo -E apt-get install -yqq \
+            git \
+            ca-certificates \
+            curl \
+            wget \
+            dos2unix \
+            python3 \
+            python3-netifaces \
+            libfuse-dev
+
+          echo ">>> Clean some large pre-installed SDKs to free space (optional)"
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /usr/local/share/boost || true
+
+          echo ">>> Apt cache clean"
+          sudo -E apt-get autoremove --purge -yqq
+          sudo -E apt-get autoclean -yqq
+          sudo -E apt-get clean -yqq
+
+          echo ">>> Init immortalwrt build environment"
+          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
+
+          echo ">>> Set timezone to Asia/Shanghai"
+          sudo -E systemctl daemon-reload || true
+          sudo -E timedatectl set-timezone "Asia/Shanghai" || true
+
+          echo ">>> Prepare build directory"
+          sudo mkdir -p /mnt/build_wrt
+          sudo chown "$USER:$USER" /mnt/build_wrt
+          ln -s /mnt/build_wrt "$GITHUB_WORKSPACE/wrt"
+
+      - name: Initialization Values
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> "$GITHUB_ENV"
+          echo "WRT_MARK=${GITHUB_REPOSITORY%%/*}" >> "$GITHUB_ENV"
+          echo "WRT_INFO=${WRT_SOURCE%%/*}" >> "$GITHUB_ENV"
+          echo "WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\\K[\\w]+(?==y)' ./Config/"$WRT_CONFIG".txt)" >> "$GITHUB_ENV"
+          echo "WRT_KVER=none" >> "$GITHUB_ENV"
+          echo "WRT_LIST=none" >> "$GITHUB_ENV"
+
+      - name: Clone Code
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git clone --depth=1 --single-branch --branch "$WRT_BRANCH" "$WRT_REPO" ./wrt/
+
+          cd ./wrt/
+          echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> "$GITHUB_ENV"
+
+          # GitHub Action 移除国内下载源
+          PROJECT_MIRRORS_FILE="./scripts/projectsmirrors.json"
+          if [ -f "$PROJECT_MIRRORS_FILE" ]; then
+            sed -i '/.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
+          fi
+
+      - name: Check Scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+
+      - name: Check Caches
+        id: check-cache
+        if: env.WRT_TEST != 'true'
+        uses: actions/cache@v4
+        with:
+          key: ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}-${{ env.WRT_HASH }}
+          restore-keys: |
+            ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}
+          path: |
+            # ccache 缓存
+            ${{ env.CCACHE_DIR }}
+            ./wrt/.ccache
+
+            # OpenWrt 下载的源码包
+            ./wrt/dl
+
+            # toolchain / host 工具链
+            ./wrt/staging_dir/host*
+            ./wrt/staging_dir/tool*
+
+            # 可选：host 端 build 目录（视磁盘空间情况）
+            ./wrt/build_dir/host*
+
+      - name: Update Caches
+        if: env.WRT_TEST != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -d "./wrt/staging_dir" ]; then
+            echo ">>> Refresh stamp timestamps in staging_dir (except target)..."
+            # 防止 host/tool 的 stamp 过期，强制刷新时间戳
+            find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r DIR; do
+              find "$DIR" -type f -exec touch {} +
+            done
+
+            mkdir -p ./wrt/tmp && echo "1" > ./wrt/tmp/.build
+            echo "toolchain skipped done!"
+          else
+            echo "caches missed!"
+          fi
+
+      - name: Clean Old Caches
+        if: env.WRT_TEST != 'true' && steps.check-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v gh >/dev/null 2>&1; then
+            echo "GitHub CLI (gh) not found, skip cache cleanup."
+            exit 0
+          fi
+
+          echo "No cache hit, start cleaning old caches for key prefix: $WRT_CONFIG-$WRT_INFO"
+
+          CACHE_LIST=$(gh cache list --key "$WRT_CONFIG-$WRT_INFO" | cut -f 1 || true)
+
+          if [ -z "${CACHE_LIST:-}" ]; then
+            echo "No existing caches to delete."
+            exit 0
+          fi
+
+          for CACHE_KEY in $CACHE_LIST; do
+            echo "Deleting cache: $CACHE_KEY"
+            gh cache delete "$CACHE_KEY" || true
+          done
+
+          echo "Caches cleanup done!"
+
+      - name: Enable ccache
+        if: env.WRT_TEST != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$CCACHE_DIR"
+          echo ">>> Set ccache max size to ${CCACHE_MAXSIZE}"
+          ccache -M "${CCACHE_MAXSIZE}" || true
+
+          echo ">>> Current ccache status:"
+          ccache -s || true
+
+      - name: Update Feeds
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd ./wrt/
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Custom Packages
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd ./wrt/package/
+          "$GITHUB_WORKSPACE/Scripts/Packages.sh"
+          "$GITHUB_WORKSPACE/Scripts/Handles.sh"
+
+      - name: Download private config file
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd ./wrt/
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "❌ GH_TOKEN not set, unable to access private repository qqsir-dev/config"
+            echo "Please add GH_TOKEN in Settings → Secrets → Actions in this repository（PAT，Contents: Read）"
+            exit 1
+          fi
+
+          REPO="qqsir-dev/config"
+          REF="main"
+
+          if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
+            FILE_PATH="ddns-go/home/ddns-go-config.yaml"
+          elif echo "$WRT_CONFIG" | grep -Eiq "68"; then
+            FILE_PATH="ddns-go/fhome/ddns-go-config.yaml"
+          else
+            echo "The current WRT_CONFIG=$WRT_CONFIG does not require downloading private configuration, skip"
+            exit 0
+          fi
+
+          OUT="package/base-files/files/etc/ddns-go-config.yaml"
+
+          mkdir -p "$(dirname "$OUT")"
+
+          curl -fsSL \
+            -H "Authorization: token ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            "https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?ref=${REF}" \
+            -o "$OUT"
+
+          if [ ! -s "$OUT" ]; then
+            echo "❌ Download failed: $OUT is empty (please check path/branch/permissions)"
+            exit 1
+          fi
+
+          echo "✅ ${FILE_PATH} Download completed to：$OUT (Size: $(wc -c < "$OUT") Byte)"
+
+      - name: Custom Settings
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd ./wrt/
+
+          if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
+            cat "$GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt" >> .config
+          else
+            cat "$GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt" "$GITHUB_WORKSPACE/Config/GENERAL.txt" >> .config
+          fi
+
+          "$GITHUB_WORKSPACE/Scripts/Settings.sh"
+
+          # 这里不再 make clean，只做 defconfig
+          make defconfig -j"$(nproc)"
+
+      - name: Download Packages
+        if: env.WRT_TEST != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd ./wrt/
+          make download -j"$(nproc)"
+
+      - name: Compile Firmware
+        if: env.WRT_TEST != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd ./wrt/
+          make -j"$(nproc)" || make -j1 V=s
+
+      - name: Machine Information
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd ./wrt/
+
+          echo "======================="
+          lscpu | grep -E "name|Core|Thread"
+          echo "======================="
+          df -h
+          echo "======================="
+          du -h --max-depth=1
+          echo "======================="
+
+      - name: Package Firmware
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd ./wrt/
+          mkdir -p ./upload/
+
+          cp -f ./.config ./upload/Config-"$WRT_CONFIG"-"$WRT_INFO"-"$WRT_BRANCH"-"$WRT_DATE".txt
+
+          if [[ "$WRT_TEST" != 'true' ]]; then
+            echo "WRT_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \\K[\\d\\.]+' {} \;)" >> "$GITHUB_ENV"
+            echo "WRT_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> "$GITHUB_ENV"
+
+            find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
+
+            for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*"); do
+              BASENAME=$(basename "$FILE")
+              EXT="${BASENAME#*.}"
+              NAME="$(echo "$BASENAME" | cut -d '.' -f 1 | grep -io "($WRT_TARGET).*" || echo "$BASENAME")"
+              NEW_FILE="$NAME"-"$WRT_DATE"-"$WRT_BRANCH"."$EXT"
+              mv -f "$FILE" ./upload/"$NEW_FILE"
+            done
+
+            # 其余文件直接移到 upload
+            find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
+
+            make clean -j"$(nproc)"
+          fi
+
+      - name: Release Firmware
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}-${{ env.WRT_BRANCH }}-${{ env.WRT_DATE }}
+          files: ./wrt/upload/*.*
+          body: |
+            ${{ contains(env.WRT_CONFIG, 'ROCK') && '这是个平台固件包，内含多个设备！' || '' }}
+            全系带开源硬件加速
+
+            源码：${{ env.WRT_REPO }}
+            分支：${{ env.WRT_BRANCH }}
+            提交：${{ env.WRT_HASH }}
+
+            配置：${{ env.WRT_CONFIG }}
+            平台：${{ env.WRT_TARGET }}
+
+            登录地址：${{ env.WRT_IP }}
+            登录密码：${{ env.WRT_PW }}
+
+            WIFI名称：${{ env.WRT_SSID }}
+            WIFI密码：${{ env.WRT_WORD }}
+
+            内核版本：${{ env.WRT_KVER }}
+            插件列表：${{ env.WRT_LIST }}
