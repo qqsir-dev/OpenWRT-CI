@@ -55,7 +55,7 @@ env:
   WRT_PACKAGE: ${{ inputs.WRT_PACKAGE }}
   WRT_TEST: ${{ inputs.WRT_TEST }}
 
-  # ccache 相关（供 OpenWrt 使用）
+  # ccache 相关
   CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_COMPRESS: "1"
   CCACHE_MAXSIZE: "2G"
@@ -358,15 +358,17 @@ jobs:
 
             find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
 
-            for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*"); do
+            for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*") ; do
               BASENAME=$(basename "$FILE")
-              EXT="${BASENAME#*.}"
-              NAME="$(echo "$BASENAME" | cut -d '.' -f 1 | grep -io "($WRT_TARGET).*" || echo "$BASENAME")"
-              NEW_FILE="$NAME"-"$WRT_DATE"-"$WRT_BRANCH"."$EXT"
-              mv -f "$FILE" ./upload/"$NEW_FILE"
+              EXT=$(echo "$BASENAME" | cut -d '.' -f 2-)
+              NAME=$(echo "$BASENAME" | cut -d '.' -f 1 | grep -io "\($WRT_TARGET\).*")
+              if [ -z "$NAME" ]; then
+                NAME=$(echo "$BASENAME" | cut -d '.' -f 1)
+              fi
+              NEW_FILE="${NAME}-${WRT_DATE}-${WRT_BRANCH}.${EXT}"
+              mv -f "$FILE" "./upload/$NEW_FILE"
             done
 
-            # 其余文件直接移到 upload
             find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
 
             make clean -j"$(nproc)"
