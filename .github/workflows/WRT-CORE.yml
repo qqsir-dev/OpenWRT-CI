@@ -150,12 +150,19 @@ jobs:
           set -euo pipefail
           find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
 
+      - name: Check Scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+
       - name: Check Caches
         id: check-cache
         if: env.WRT_TEST != 'true'
         uses: actions/cache@v4
         with:
-          key: ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}-${{ env.WRT_HASH }}
+          # ✅ 不再包含 WRT_HASH，改成按机型+来源分 cache
+          key: ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}
           restore-keys: |
             ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}
           path: |
@@ -171,7 +178,7 @@ jobs:
             ./wrt/staging_dir/tool*
 
             # 可选：host 端 build 目录（视磁盘空间情况）
-            #./wrt/build_dir/host*
+            # ./wrt/build_dir/host*
 
       - name: Update Caches
         if: env.WRT_TEST != 'true'
@@ -193,6 +200,7 @@ jobs:
           fi
 
       - name: Clean Old Caches
+        # 只有当没有命中缓存时才清理旧 cache
         if: env.WRT_TEST != 'true' && steps.check-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
@@ -205,6 +213,7 @@ jobs:
 
           echo "No cache hit, start cleaning old caches for key prefix: $WRT_CONFIG-$WRT_INFO"
 
+          # ✅ 和上面 key 规则保持一致，只按 CONFIG-INFO 前缀找
           CACHE_LIST=$(gh cache list --key "$WRT_CONFIG-$WRT_INFO" | cut -f 1 || true)
 
           if [ -z "${CACHE_LIST:-}" ]; then
