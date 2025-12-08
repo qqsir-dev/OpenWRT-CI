@@ -163,30 +163,23 @@ jobs:
           fi
 
       - name: Clean Old Caches
-        if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK') && steps.check-cache.outputs.cache-hit != 'true'
+        # 只有当没有命中缓存时才检查（不再删除）
+        if: env.WRT_TEST != 'true' && steps.check-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -euo pipefail
+
           if ! command -v gh >/dev/null 2>&1; then
-            echo "GitHub CLI (gh) not found, skip cache cleanup."
+            echo "GitHub CLI (gh) not found, skip cache inspect."
             exit 0
           fi
 
-          echo "No cache hit, start cleaning old caches for key prefix: $WRT_CONFIG-$WRT_INFO"
+          echo "No cache hit, list existing caches for key prefix: $WRT_CONFIG-$WRT_INFO"
 
-          CACHE_LIST=$(gh cache list --key "$WRT_CONFIG-$WRT_INFO" | cut -f 1 || true)
+          gh cache list --key "$WRT_CONFIG-$WRT_INFO" || true
 
-          if [ -z "${CACHE_LIST:-}" ]; then
-            echo "No existing caches to delete."
-            exit 0
-          fi
+          echo "Skip deleting caches to avoid 403 (GITHUB_TOKEN has no delete permission)."
 
-          for CACHE_KEY in $CACHE_LIST; do
-            echo "Deleting cache: $CACHE_KEY"
-            gh cache delete "$CACHE_KEY" || true
-          done
-
-          echo "Caches cleanup done!"
 
       - name: Enable ccache
         if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
