@@ -128,10 +128,9 @@ jobs:
 
       - name: Check Caches
         id: check-cache
-        if: env.WRT_TEST != 'true'
+        if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
         uses: actions/cache@v4
         with:
-          # ✅ 不再包含 WRT_HASH，改成按机型+来源分 cache
           key: ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}
           restore-keys: |
             ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}
@@ -141,28 +140,22 @@ jobs:
             ./wrt/.ccache
 
             # OpenWrt 下载的源码包
-            # ./wrt/dl
+            ./wrt/dl
 
             # toolchain / host 工具链
             ./wrt/staging_dir/host*
             ./wrt/staging_dir/tool*
 
-            # 可选：host 端 build 目录（视磁盘空间情况）
-            # ./wrt/build_dir/host*
-
       - name: Update Caches
-        if: env.WRT_TEST != 'true'
+        if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
         shell: bash
         run: |
           set -euo pipefail
-
           if [ -d "./wrt/staging_dir" ]; then
             echo ">>> Refresh stamp timestamps in staging_dir (except target)..."
-            # 防止 host/tool 的 stamp 过期，强制刷新时间戳
             find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r DIR; do
               find "$DIR" -type f -exec touch {} +
             done
-
             mkdir -p ./wrt/tmp && echo "1" > ./wrt/tmp/.build
             echo "toolchain skipped done!"
           else
@@ -170,12 +163,10 @@ jobs:
           fi
 
       - name: Clean Old Caches
-        # 只有当没有命中缓存时才清理旧 cache
-        if: env.WRT_TEST != 'true' && steps.check-cache.outputs.cache-hit != 'true'
+        if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK') && steps.check-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -euo pipefail
-
           if ! command -v gh >/dev/null 2>&1; then
             echo "GitHub CLI (gh) not found, skip cache cleanup."
             exit 0
@@ -183,7 +174,6 @@ jobs:
 
           echo "No cache hit, start cleaning old caches for key prefix: $WRT_CONFIG-$WRT_INFO"
 
-          # ✅ 和上面 key 规则保持一致，只按 CONFIG-INFO 前缀找
           CACHE_LIST=$(gh cache list --key "$WRT_CONFIG-$WRT_INFO" | cut -f 1 || true)
 
           if [ -z "${CACHE_LIST:-}" ]; then
@@ -199,17 +189,16 @@ jobs:
           echo "Caches cleanup done!"
 
       - name: Enable ccache
-        if: env.WRT_TEST != 'true'
+        if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
         shell: bash
         run: |
           set -euo pipefail
-
           mkdir -p "$CCACHE_DIR"
           echo ">>> Set ccache max size to ${CCACHE_MAXSIZE}"
           ccache -M "${CCACHE_MAXSIZE}" || true
-
           echo ">>> Current ccache status:"
           ccache -s || true
+
 
       - name: Update Feeds
         shell: bash
