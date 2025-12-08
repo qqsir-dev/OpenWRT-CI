@@ -77,44 +77,20 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          set -euo pipefail
-
-          echo ">>> Update apt index"
-          sudo -E apt-get update -yqq
-
-          echo ">>> Install basic packages"
-          sudo -E apt-get install -yqq \
-            git \
-            ca-certificates \
-            curl \
-            wget \
-            dos2unix \
-            python3 \
-            python3-netifaces \
-            libfuse-dev
-
-          echo ">>> Clean some large pre-installed SDKs to free space (optional)"
-          sudo rm -rf /usr/local/lib/android || true
-          sudo rm -rf /usr/share/dotnet || true
-          sudo rm -rf /opt/ghc || true
-          sudo rm -rf /usr/local/share/boost || true
-
-          echo ">>> Apt cache clean"
-          sudo -E apt-get autoremove --purge -yqq
-          sudo -E apt-get autoclean -yqq
-          sudo -E apt-get clean -yqq
-
-          echo ">>> Init immortalwrt build environment"
+          sudo -E apt -yqq purge firefox
+          sudo -E apt -yqq update
+          sudo -E apt -yqq full-upgrade
+          sudo -E apt -yqq autoremove --purge
+          sudo -E apt -yqq autoclean
+          sudo -E apt -yqq clean
+          sudo -E apt -yqq install dos2unix python3-netifaces libfuse-dev
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
+          sudo -E systemctl daemon-reload
+          sudo -E timedatectl set-timezone "Asia/Shanghai"
 
-          echo ">>> Set timezone to Asia/Shanghai"
-          sudo -E systemctl daemon-reload || true
-          sudo -E timedatectl set-timezone "Asia/Shanghai" || true
-
-          echo ">>> Prepare build directory"
           sudo mkdir -p /mnt/build_wrt
-          sudo chown "$USER:$USER" /mnt/build_wrt
-          ln -s /mnt/build_wrt "$GITHUB_WORKSPACE/wrt"
+          sudo chown $USER:$USER /mnt/build_wrt
+          sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
 
       - name: Initialization Values
         shell: bash
@@ -150,12 +126,6 @@ jobs:
           set -euo pipefail
           find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
 
-      - name: Check Scripts
-        shell: bash
-        run: |
-          set -euo pipefail
-          find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
-
       - name: Check Caches
         id: check-cache
         if: env.WRT_TEST != 'true'
@@ -171,7 +141,7 @@ jobs:
             ./wrt/.ccache
 
             # OpenWrt 下载的源码包
-            ./wrt/dl
+            # ./wrt/dl
 
             # toolchain / host 工具链
             ./wrt/staging_dir/host*
