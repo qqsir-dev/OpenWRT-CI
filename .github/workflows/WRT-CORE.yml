@@ -128,7 +128,7 @@ jobs:
 
       - name: Check Caches
         id: check-cache
-        if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
+        # if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
         uses: actions/cache@v4
         with:
           key: ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}
@@ -147,7 +147,7 @@ jobs:
             ./wrt/staging_dir/tool*
 
       - name: Update Caches
-        if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
+        # if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
         shell: bash
         run: |
           set -euo pipefail
@@ -182,7 +182,7 @@ jobs:
 
 
       - name: Enable ccache
-        if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
+        # if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
         shell: bash
         run: |
           set -euo pipefail
