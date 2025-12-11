@@ -58,7 +58,7 @@ env:
   # ccache 相关
   CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_COMPRESS: "1"
-  CCACHE_MAXSIZE: "2G"
+  CCACHE_MAXSIZE: "3G"
 
 permissions:
   contents: write
