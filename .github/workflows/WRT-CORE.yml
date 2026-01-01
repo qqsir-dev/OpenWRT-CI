@@ -199,6 +199,10 @@ jobs:
           set -euo pipefail
 
           cd ./wrt/
+          wget -O pr-21288.patch \
+          https://patch-diff.githubusercontent.com/raw/openwrt/openwrt/pull/21288.patch
+          git apply --check pr-21288.patch
+          git apply pr-21288.patch
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
