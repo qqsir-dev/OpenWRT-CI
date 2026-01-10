@@ -256,6 +256,12 @@ if [ -x /etc/init.d/ddns-go ]; then
   /etc/init.d/ddns-go restart || true
 fi
 
+# Ensure DHCP/DNS changes take effect
+if [ -x /etc/init.d/dnsmasq ]; then
+  /etc/init.d/dnsmasq restart || true
+fi
+
+
 # ✅ 重启防火墙（999 不会重启 firewall）
 if [ -x /etc/init.d/firewall ]; then
   /etc/init.d/firewall restart || true
