@@ -96,15 +96,17 @@ ensure_redirect() {
   uciq set "firewall.\$sec.dest_port=\$dest_port"
 
   # 管理类端口：默认锁死；如 WAN_MGMT_ALLOW 非空则只允许该IP/CIDR访问
-  case "\$sec" in
+  case "$sec" in
     router_http|router_https|ttyd|openclash|lede_netdata|netdata|esxi_http)
-      if [ -n "\$WAN_MGMT_ALLOW" ]; then
-        uciq set "firewall.\$sec.src_ip=\$WAN_MGMT_ALLOW"
+      if [ -n "$WAN_MGMT_ALLOW" ]; then
+        uciq set "firewall.$sec.src_ip=$WAN_MGMT_ALLOW"
       else
-        uciq set "firewall.\$sec.src_ip=127.0.0.1/32"
+        # 默认不限制来源
+        uciq delete "firewall.$sec.src_ip"
       fi
     ;;
   esac
+
 }
 
 log "Start. WRT_CONFIG='\$WRT_CONFIG' WRT_IP='\$WRT_IP'"
