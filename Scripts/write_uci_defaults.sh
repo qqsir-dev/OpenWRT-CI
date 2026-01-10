@@ -193,7 +193,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
     log "R68 PPPoE empty; skip."
   fi
 
-  # 按你原脚本：桥口 ports
+  # Lan ports
   uciq set "network.@device[0].ports=eth0 eth1 eth2"
   uciq commit network
 
@@ -262,7 +262,7 @@ if [ -x /etc/init.d/dnsmasq ]; then
 fi
 
 
-# ✅ 重启防火墙（999 不会重启 firewall）
+# Restart firewall
 if [ -x /etc/init.d/firewall ]; then
   /etc/init.d/firewall restart || true
 fi
