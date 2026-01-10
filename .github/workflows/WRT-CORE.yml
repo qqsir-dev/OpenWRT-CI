@@ -255,6 +255,19 @@ jobs:
 
           echo "✅ ${FILE_PATH} Download completed to：$OUT (Size: $(wc -c < "$OUT") Byte)"
 
+      - name: Inject PPPoE into uci-defaults
+        shell: bash
+        env:
+          PPPOE_X86_USER: ${{ secrets.PPPOE_X86_USER }}
+          PPPOE_X86_PASS: ${{ secrets.PPPOE_X86_PASS }}
+          PPPOE_R68_USER: ${{ secrets.PPPOE_R68_USER }}
+          PPPOE_R68_PASS: ${{ secrets.PPPOE_R68_PASS }}
+        run: |
+          set -euo pipefail
+          cd ./wrt/
+          bash "$GITHUB_WORKSPACE/Scripts/write_uci_defaults.sh"
+
+      
       - name: Custom Settings
         shell: bash
         run: |
