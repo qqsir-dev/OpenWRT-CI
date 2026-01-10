@@ -229,7 +229,7 @@ jobs:
           REPO="qqsir-dev/config"
           REF="main"
 
-          if echo "$WRT_CONFIG" | grep -Eiq "64|86"; then
+          if echo "$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
             FILE_PATH="ddns-go/home/ddns-go-config.yaml"
           elif echo "$WRT_CONFIG" | grep -Eiq "68"; then
             FILE_PATH="ddns-go/fhome/ddns-go-config.yaml"
