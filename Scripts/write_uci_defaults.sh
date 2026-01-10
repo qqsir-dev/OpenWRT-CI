@@ -110,7 +110,7 @@ ensure_redirect() {
 log "Start. WRT_CONFIG='\$WRT_CONFIG' WRT_IP='\$WRT_IP'"
 
 # ============================================================
-# X86 (matrix= X86) — 兼容旧判断 64/86
+# X86 (matrix= X86)
 # ============================================================
 if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   log "Match: X86"
@@ -178,7 +178,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
 fi
 
 # ============================================================
-# R68S (matrix= R68S) — 匹配 R68 即可命中
+# R68S (matrix= R68S)
 # ============================================================
 if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
   log "Match: R68"
@@ -221,7 +221,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
 fi
 
 # ============================================================
-# ROCKCHIP (matrix= ROCKCHIP) — 匹配 ROCK 即可命中
+# ROCKCHIP (matrix= ROCKCHIP)
 # ============================================================
 if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   log "Match: ROCK"
@@ -246,6 +246,14 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
 
   uciq set "luci.main.lang=en"
   uciq commit luci
+fi
+
+# ddns-go: enable & start
+if [ -x /etc/init.d/ddns-go ]; then
+  uciq set ddns-go.config.enabled='1'
+  uciq commit ddns-go
+  /etc/init.d/ddns-go enable || true
+  /etc/init.d/ddns-go restart || true
 fi
 
 # ✅ 重启防火墙（999 不会重启 firewall）
