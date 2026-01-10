@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# === build context from workflow env (WRT-CORE.yml env 已经定义) ===
+# ============================================================
+# Build context (来自 WRT-CORE.yml env / inputs)
+# ============================================================
 WRT_CONFIG_BUILD="${WRT_CONFIG_BUILD:-${WRT_CONFIG:-}}"
 WRT_IP_BUILD="${WRT_IP_BUILD:-${WRT_IP:-192.168.50.1}}"
+
+# 可选：如果你想允许自己公网访问路由器面板/ttyd等（默认锁死）
 WAN_MGMT_ALLOW_BUILD="${WAN_MGMT_ALLOW_BUILD:-${WAN_MGMT_ALLOW:-}}"
 
-# === PPPoE from GitHub Secrets injected env ===
-# Secrets 名字：PPPOE_X86_USER / PPPOE_X86_PASS / PPPOE_R68_USER / PPPOE_R68_PASS
+# ============================================================
+# PPPoE credentials (来自 GitHub Secrets 注入 env)
+#   PPPOE_X86_USER / PPPOE_X86_PASS / PPPOE_R68_USER / PPPOE_R68_PASS
+# ============================================================
 X86_PPPOE_USER_BUILD="${X86_PPPOE_USER_BUILD:-${PPPOE_X86_USER:-}}"
 X86_PPPOE_PASS_BUILD="${X86_PPPOE_PASS_BUILD:-${PPPOE_X86_PASS:-}}"
 R68_PPPOE_USER_BUILD="${R68_PPPOE_USER_BUILD:-${PPPOE_R68_USER:-}}"
@@ -18,7 +24,7 @@ if [ -z "${WRT_CONFIG_BUILD:-}" ]; then
   exit 1
 fi
 
-# --- safe single-quote embed for generated uci-defaults script ---
+# ---- Shell-safe single-quote embed (handles special chars in passwords) ----
 sh_quote() {
   local s=${1-}
   s=${s//\'/\'\"\'\"\'}
@@ -34,7 +40,7 @@ Q_X86_PASS="$(sh_quote "$X86_PPPOE_PASS_BUILD")"
 Q_R68_USER="$(sh_quote "$R68_PPPOE_USER_BUILD")"
 Q_R68_PASS="$(sh_quote "$R68_PPPOE_PASS_BUILD")"
 
-# ✅ 你要求：用 998 更保险
+# ✅ 998：尽量最后执行，避免被 991 之类覆盖；999 负责 network/odhcpd/rpcd restart
 TARGET_FILE="./package/base-files/files/etc/uci-defaults/998_custom-net.sh"
 mkdir -p "$(dirname "$TARGET_FILE")"
 
@@ -44,6 +50,7 @@ cat > "$TARGET_FILE" <<EOF
 # One-time init script: runs once at first boot.
 
 set -e
+
 TAG="[998_custom-net]"
 log() { echo "\$TAG \$*"; }
 
@@ -56,7 +63,7 @@ X86_PPPOE_PASS=$Q_X86_PASS
 R68_PPPOE_USER=$Q_R68_USER
 R68_PPPOE_PASS=$Q_R68_PASS
 
-# ✅ 保险丝：即使某个 uci key 不存在也不要炸
+# 保险丝：某些 key 不存在时不要炸（uci-defaults 最怕中途退出）
 uciq() { uci -q "\$@" || true; }
 
 ensure_list() {
@@ -74,8 +81,10 @@ ensure_dhcp_host() {
   uciq set "dhcp.\$sec.leasetime=infinite"
 }
 
+# fw4 兼容：UCI 的 redirect 仍然有效
 ensure_redirect() {
   local sec="\$1" src_dport="\$2" dest_ip="\$3" dest_port="\$4" proto="\$5"
+
   uciq set "firewall.\$sec=redirect"
   uciq set "firewall.\$sec.name=\$sec"
   uciq set "firewall.\$sec.target=DNAT"
@@ -100,15 +109,15 @@ ensure_redirect() {
 
 log "Start. WRT_CONFIG='\$WRT_CONFIG' WRT_IP='\$WRT_IP'"
 
-# ------------------------------------------------------------
+# ============================================================
 # X86 (matrix= X86) — 兼容旧判断 64/86
-# ------------------------------------------------------------
+# ============================================================
 if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   log "Match: X86"
 
-  # ⚠️ x86 网卡名可能不是 eth1，如需再改
+  # PPPoE + WAN 口
+  # ⚠️ x86 网卡名可能不是 eth1，若拨号失败先在设备上 ip link 看看再改
   uciq set "network.wan.device=eth1"
-
   if [ -n "\$X86_PPPOE_USER" ] && [ -n "\$X86_PPPOE_PASS" ]; then
     uciq set "network.wan.proto=pppoe"
     uciq set "network.wan.username=\$X86_PPPOE_USER"
@@ -119,7 +128,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   fi
   uciq commit network
 
-  # DHCP / RA (按你原风格：server-only)
+  # DHCP / RA
   ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76"
   uciq set "dhcp.lan.ra=server"
   uciq set "dhcp.lan.dhcpv6=server"
@@ -128,29 +137,53 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   uciq set "dhcp.lan.ra_default=1"
   uciq set "dhcp.lan.ra_flags=none"
 
+  # 静态租约
   ensure_dhcp_host home_srv "HOME-SRV" "90:2e:16:bd:0b:cc" "192.168.50.8"
   ensure_dhcp_host ap       "AP"       "60:cf:84:28:8f:80" "192.168.50.6"
   uciq commit dhcp
 
-  # 常用端口（你可继续扩展成完整端口列表）
-  ensure_redirect router_http  8098 "\$WRT_IP" 80   "tcp udp"
-  ensure_redirect router_https 8043 "\$WRT_IP" 443  "tcp udp"
-  ensure_redirect openclash    9090 "\$WRT_IP" 9090 "tcp udp"
-  ensure_redirect ttyd         7681 "\$WRT_IP" 7681 "tcp"
+  # Firewall redirects
+  ensure_redirect kms          1688  "\$WRT_IP"        1688  "tcp udp"
+  ensure_redirect rdp          3389  "192.168.50.8"   3389  "tcp"
+
+  # DayZ
+  ensure_redirect dayz_2302    2302  "192.168.50.8"   2302  "tcp udp"
+  ensure_redirect dayz_27016   27016 "192.168.50.8"   27016 "udp"
+  ensure_redirect dayz_2308    2308  "192.168.50.8"   2308  "tcp udp"
+
+  # Router
+  ensure_redirect router_http  8098  "\$WRT_IP"        80    "tcp udp"
+  ensure_redirect router_https 8043  "\$WRT_IP"        443   "tcp udp"
+
+  # Netdata (remote host)
+  ensure_redirect netdata      8099  "192.168.50.9"   19999 "tcp udp"
+
+  # OpenClash Dashboard
+  ensure_redirect openclash    9090  "\$WRT_IP"        9090  "tcp udp"
+
+  # Router local netdata (if used)
+  ensure_redirect lede_netdata 19999 "\$WRT_IP"        19999 "tcp udp"
+
+  # TTYD
+  ensure_redirect ttyd         7681  "\$WRT_IP"        7681  "tcp"
+
+  # ESXi Web
+  ensure_redirect esxi_http    8096  "192.168.50.11"  80    "tcp"
+
   uciq commit firewall
 
+  # LuCI 语言
   uciq set "luci.main.lang=en"
   uciq commit luci
 fi
 
-# ------------------------------------------------------------
+# ============================================================
 # R68S (matrix= R68S) — 匹配 R68 即可命中
-# ------------------------------------------------------------
+# ============================================================
 if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
   log "Match: R68"
 
   uciq set "network.wan.device=eth3"
-
   if [ -n "\$R68_PPPOE_USER" ] && [ -n "\$R68_PPPOE_PASS" ]; then
     uciq set "network.wan.proto=pppoe"
     uciq set "network.wan.username=\$R68_PPPOE_USER"
@@ -160,9 +193,11 @@ if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
     log "R68 PPPoE empty; skip."
   fi
 
+  # 按你原脚本：桥口 ports
   uciq set "network.@device[0].ports=eth0 eth1 eth2"
   uciq commit network
 
+  # DHCP / RA
   uciq set "dhcp.lan.start=150"
   uciq set "dhcp.lan.limit=100"
   ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76"
@@ -174,19 +209,20 @@ if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
   uciq set "dhcp.lan.ra_flags=none"
   uciq commit dhcp
 
-  ensure_redirect router_http  8098 "\$WRT_IP" 80   "tcp udp"
-  ensure_redirect router_https 8043 "\$WRT_IP" 443  "tcp udp"
-  ensure_redirect openclash    9090 "\$WRT_IP" 9090 "tcp udp"
-  ensure_redirect ttyd         7681 "\$WRT_IP" 7681 "tcp"
+  # Firewall redirects
+  ensure_redirect router_http  8098  "\$WRT_IP" 80   "tcp udp"
+  ensure_redirect router_https 8043  "\$WRT_IP" 443  "tcp udp"
+  ensure_redirect openclash    9090  "\$WRT_IP" 9090 "tcp udp"
+  ensure_redirect ttyd         7681  "\$WRT_IP" 7681 "tcp"
   uciq commit firewall
 
   uciq set "luci.main.lang=en"
   uciq commit luci
 fi
 
-# ------------------------------------------------------------
+# ============================================================
 # ROCKCHIP (matrix= ROCKCHIP) — 匹配 ROCK 即可命中
-# ------------------------------------------------------------
+# ============================================================
 if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   log "Match: ROCK"
 
@@ -204,6 +240,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   uciq set "dhcp.lan.ra_flags=none"
   uciq commit dhcp
 
+  # Firewall redirects
   ensure_redirect router_http 8098 "\$WRT_IP" 80 "tcp udp"
   uciq commit firewall
 
@@ -211,7 +248,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   uciq commit luci
 fi
 
-# ✅ 额外重启防火墙（999 不会重启 firewall）
+# ✅ 重启防火墙（999 不会重启 firewall）
 if [ -x /etc/init.d/firewall ]; then
   /etc/init.d/firewall restart || true
 fi
