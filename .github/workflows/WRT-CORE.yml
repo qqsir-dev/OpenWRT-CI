@@ -238,7 +238,7 @@ jobs:
             exit 0
           fi
 
-          OUT="package/base-files/files/etc/ddns-go-config.yaml"
+          OUT="package/base-files/files/etc/ddns-go/ddns-go-config.yaml"
 
           mkdir -p "$(dirname "$OUT")"
 
