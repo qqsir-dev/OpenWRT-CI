@@ -156,7 +156,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   ensure_redirect router_https 8043  "\$WRT_IP"        443   "tcp udp"
 
   # Netdata (remote host)
-  ensure_redirect netdata      8099  "192.168.50.9"   19999 "tcp udp"
+  # ensure_redirect netdata      8099  "192.168.50.9"   19999 "tcp udp"
 
   # OpenClash Dashboard
   ensure_redirect openclash    9090  "\$WRT_IP"        9090  "tcp udp"
@@ -248,30 +248,17 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   uciq commit luci
 fi
 
-# ddns-go: copy private config into ddns-go dir (avoid build-time file conflict)
 if [ -f /etc/ddns-go-config.yaml ]; then
   mkdir -p /etc/ddns-go
   cp -f /etc/ddns-go-config.yaml /etc/ddns-go/ddns-go-config.yaml || true
 fi
 
-# Restart firewall (apply redirects/rules)
-if [ -x /etc/init.d/firewall ]; then
-  /etc/init.d/firewall restart || true
-fi
-
-# Ensure DHCP/DNS changes take effect
-if [ -x /etc/init.d/dnsmasq ]; then
-  /etc/init.d/dnsmasq restart || true
-fi
-
-# ddns-go: enable & start
+# ddns-go: enable only (restart in 999 after network is ready)
 if [ -x /etc/init.d/ddns-go ]; then
   uciq set ddns-go.config.enabled='1'
   uciq commit ddns-go
   /etc/init.d/ddns-go enable || true
-  /etc/init.d/ddns-go restart || true
 fi
-
 
 log "Done."
 exit 0
@@ -279,3 +266,40 @@ EOF
 
 chmod 0755 "$TARGET_FILE"
 echo "[write_uci_defaults] wrote $TARGET_FILE (WRT_CONFIG=$WRT_CONFIG_BUILD)"
+
+# ------------------------------------------------------------
+# Patch 999_auto-restart.sh to restart firewall/dnsmasq/ddns-go
+# after network is restarted (more stable on first boot)
+# ------------------------------------------------------------
+AUTO_999="./package/base-files/files/etc/uci-defaults/999_auto-restart.sh"
+
+if [ -f "$AUTO_999" ]; then
+  # Ensure executable
+  chmod 0755 "$AUTO_999" || true
+
+  # Append only if not already present (idempotent)
+  if ! grep -q "added by write_uci_defaults.*firewall" "$AUTO_999" 2>/dev/null; then
+    cat >> "$AUTO_999" <<'EOS'
+
+# --- added by write_uci_defaults: stabilize first boot service reload ---
+# Restart dnsmasq so DHCP/DNS options take effect
+if [ -x /etc/init.d/dnsmasq ]; then
+  /etc/init.d/dnsmasq restart || true
+fi
+
+# Restart firewall after network is ready (fw4 needs this for DNAT)
+if [ -x /etc/init.d/firewall ]; then
+  /etc/init.d/firewall restart || true
+fi
+
+# Restart ddns-go after network/DNS is ready
+if [ -x /etc/init.d/ddns-go ]; then
+  /etc/init.d/ddns-go restart || true
+fi
+# --- end added by write_uci_defaults ---
+EOS
+  fi
+else
+  echo "[write_uci_defaults] WARN: $AUTO_999 not found, skip patch."
+fi
+
