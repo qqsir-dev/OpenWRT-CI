@@ -248,6 +248,12 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   uciq commit luci
 fi
 
+# ddns-go: copy private config into ddns-go dir (avoid build-time file conflict)
+if [ -f /etc/ddns-go-config.yaml ]; then
+  mkdir -p /etc/ddns-go
+  cp -f /etc/ddns-go-config.yaml /etc/ddns-go/ddns-go-config.yaml
+fi
+
 # ddns-go: enable & start
 if [ -x /etc/init.d/ddns-go ]; then
   uciq set ddns-go.config.enabled='1'
