@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---- read build context from workflow env (already defined in WRT-CORE.yml env:) ----
+# === build context from workflow env (WRT-CORE.yml env 已经定义) ===
 WRT_CONFIG_BUILD="${WRT_CONFIG_BUILD:-${WRT_CONFIG:-}}"
 WRT_IP_BUILD="${WRT_IP_BUILD:-${WRT_IP:-192.168.50.1}}"
 WAN_MGMT_ALLOW_BUILD="${WAN_MGMT_ALLOW_BUILD:-${WAN_MGMT_ALLOW:-}}"
 
-# ---- read PPPoE from GitHub Secrets injected env ----
-# Prefer *_BUILD if you ever pass them manually; otherwise use the Secrets env names.
+# === PPPoE from GitHub Secrets injected env ===
+# Secrets 名字：PPPOE_X86_USER / PPPOE_X86_PASS / PPPOE_R68_USER / PPPOE_R68_PASS
 X86_PPPOE_USER_BUILD="${X86_PPPOE_USER_BUILD:-${PPPOE_X86_USER:-}}"
 X86_PPPOE_PASS_BUILD="${X86_PPPOE_PASS_BUILD:-${PPPOE_X86_PASS:-}}"
 R68_PPPOE_USER_BUILD="${R68_PPPOE_USER_BUILD:-${PPPOE_R68_USER:-}}"
@@ -18,7 +18,7 @@ if [ -z "${WRT_CONFIG_BUILD:-}" ]; then
   exit 1
 fi
 
-# ---- shell-safe single-quote embed for generated script ----
+# --- safe single-quote embed for generated uci-defaults script ---
 sh_quote() {
   local s=${1-}
   s=${s//\'/\'\"\'\"\'}
@@ -34,16 +34,17 @@ Q_X86_PASS="$(sh_quote "$X86_PPPOE_PASS_BUILD")"
 Q_R68_USER="$(sh_quote "$R68_PPPOE_USER_BUILD")"
 Q_R68_PASS="$(sh_quote "$R68_PPPOE_PASS_BUILD")"
 
-TARGET_FILE="./package/base-files/files/etc/uci-defaults/998-custom-net"
+# ✅ 你要求：用 998 更保险
+TARGET_FILE="./package/base-files/files/etc/uci-defaults/998_custom-net.sh"
 mkdir -p "$(dirname "$TARGET_FILE")"
 
 cat > "$TARGET_FILE" <<EOF
 #!/bin/sh
-# /etc/uci-defaults/99-custom-net
+# /etc/uci-defaults/998_custom-net.sh
 # One-time init script: runs once at first boot.
 
 set -e
-TAG="[99-custom-net]"
+TAG="[998_custom-net]"
 log() { echo "\$TAG \$*"; }
 
 WRT_CONFIG=$Q_WRT_CONFIG
@@ -55,11 +56,12 @@ X86_PPPOE_PASS=$Q_X86_PASS
 R68_PPPOE_USER=$Q_R68_USER
 R68_PPPOE_PASS=$Q_R68_PASS
 
-uciq() { uci -q "\$@"; }
+# ✅ 保险丝：即使某个 uci key 不存在也不要炸
+uciq() { uci -q "\$@" || true; }
 
 ensure_list() {
   local key="\$1" val="\$2"
-  uciq del_list "\$key=\$val" 2>/dev/null || true
+  uciq del_list "\$key=\$val"
   uciq add_list "\$key=\$val"
 }
 
@@ -84,6 +86,7 @@ ensure_redirect() {
   uciq set "firewall.\$sec.dest_ip=\$dest_ip"
   uciq set "firewall.\$sec.dest_port=\$dest_port"
 
+  # 管理类端口：默认锁死；如 WAN_MGMT_ALLOW 非空则只允许该IP/CIDR访问
   case "\$sec" in
     router_http|router_https|ttyd|openclash|lede_netdata|netdata|esxi_http)
       if [ -n "\$WAN_MGMT_ALLOW" ]; then
@@ -97,20 +100,26 @@ ensure_redirect() {
 
 log "Start. WRT_CONFIG='\$WRT_CONFIG' WRT_IP='\$WRT_IP'"
 
-# ---- X86 (matrix= X86) ----
+# ------------------------------------------------------------
+# X86 (matrix= X86) — 兼容旧判断 64/86
+# ------------------------------------------------------------
 if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   log "Match: X86"
 
+  # ⚠️ x86 网卡名可能不是 eth1，如需再改
   uciq set "network.wan.device=eth1"
+
   if [ -n "\$X86_PPPOE_USER" ] && [ -n "\$X86_PPPOE_PASS" ]; then
     uciq set "network.wan.proto=pppoe"
     uciq set "network.wan.username=\$X86_PPPOE_USER"
     uciq set "network.wan.password=\$X86_PPPOE_PASS"
+    log "X86 PPPoE set."
   else
     log "X86 PPPoE empty; skip."
   fi
   uciq commit network
 
+  # DHCP / RA (按你原风格：server-only)
   ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76"
   uciq set "dhcp.lan.ra=server"
   uciq set "dhcp.lan.dhcpv6=server"
@@ -123,30 +132,35 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   ensure_dhcp_host ap       "AP"       "60:cf:84:28:8f:80" "192.168.50.6"
   uciq commit dhcp
 
-  ensure_redirect router_http  8098 "\$WRT_IP" 80  "tcp udp"
-  ensure_redirect router_https 8043 "\$WRT_IP" 443 "tcp udp"
-  ensure_redirect ttyd         7681 "\$WRT_IP" 7681 "tcp"
+  # 常用端口（你可继续扩展成完整端口列表）
+  ensure_redirect router_http  8098 "\$WRT_IP" 80   "tcp udp"
+  ensure_redirect router_https 8043 "\$WRT_IP" 443  "tcp udp"
   ensure_redirect openclash    9090 "\$WRT_IP" 9090 "tcp udp"
+  ensure_redirect ttyd         7681 "\$WRT_IP" 7681 "tcp"
   uciq commit firewall
 
   uciq set "luci.main.lang=en"
   uciq commit luci
 fi
 
-# ---- R68S (matrix= R68S, match R68) ----
+# ------------------------------------------------------------
+# R68S (matrix= R68S) — 匹配 R68 即可命中
+# ------------------------------------------------------------
 if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
   log "Match: R68"
 
   uciq set "network.wan.device=eth3"
+
   if [ -n "\$R68_PPPOE_USER" ] && [ -n "\$R68_PPPOE_PASS" ]; then
     uciq set "network.wan.proto=pppoe"
     uciq set "network.wan.username=\$R68_PPPOE_USER"
     uciq set "network.wan.password=\$R68_PPPOE_PASS"
+    log "R68 PPPoE set."
   else
     log "R68 PPPoE empty; skip."
   fi
 
-  uciq set "network.@device[0].ports=eth0 eth1 eth2" 2>/dev/null || true
+  uciq set "network.@device[0].ports=eth0 eth1 eth2"
   uciq commit network
 
   uciq set "dhcp.lan.start=150"
@@ -162,18 +176,21 @@ if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
 
   ensure_redirect router_http  8098 "\$WRT_IP" 80   "tcp udp"
   ensure_redirect router_https 8043 "\$WRT_IP" 443  "tcp udp"
-  ensure_redirect ttyd         7681 "\$WRT_IP" 7681 "tcp"
   ensure_redirect openclash    9090 "\$WRT_IP" 9090 "tcp udp"
+  ensure_redirect ttyd         7681 "\$WRT_IP" 7681 "tcp"
   uciq commit firewall
 
   uciq set "luci.main.lang=en"
   uciq commit luci
 fi
 
-# ---- ROCKCHIP (matrix= ROCKCHIP, match ROCK) ----
+# ------------------------------------------------------------
+# ROCKCHIP (matrix= ROCKCHIP) — 匹配 ROCK 即可命中
+# ------------------------------------------------------------
 if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   log "Match: ROCK"
-  uciq set "network.lan.delegate=0" 2>/dev/null || true
+
+  uciq set "network.lan.delegate=0"
   uciq commit network
 
   uciq set "dhcp.lan.start=150"
@@ -194,9 +211,10 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   uciq commit luci
 fi
 
-/etc/init.d/network restart || true
-/etc/init.d/odhcpd restart || true
-/etc/init.d/firewall restart || true
+# ✅ 额外重启防火墙（999 不会重启 firewall）
+if [ -x /etc/init.d/firewall ]; then
+  /etc/init.d/firewall restart || true
+fi
 
 log "Done."
 exit 0
