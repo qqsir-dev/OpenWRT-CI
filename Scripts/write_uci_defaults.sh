@@ -251,7 +251,17 @@ fi
 # ddns-go: copy private config into ddns-go dir (avoid build-time file conflict)
 if [ -f /etc/ddns-go-config.yaml ]; then
   mkdir -p /etc/ddns-go
-  cp -f /etc/ddns-go-config.yaml /etc/ddns-go/ddns-go-config.yaml
+  cp -f /etc/ddns-go-config.yaml /etc/ddns-go/ddns-go-config.yaml || true
+fi
+
+# Restart firewall (apply redirects/rules)
+if [ -x /etc/init.d/firewall ]; then
+  /etc/init.d/firewall restart || true
+fi
+
+# Ensure DHCP/DNS changes take effect
+if [ -x /etc/init.d/dnsmasq ]; then
+  /etc/init.d/dnsmasq restart || true
 fi
 
 # ddns-go: enable & start
@@ -262,16 +272,6 @@ if [ -x /etc/init.d/ddns-go ]; then
   /etc/init.d/ddns-go restart || true
 fi
 
-# Ensure DHCP/DNS changes take effect
-if [ -x /etc/init.d/dnsmasq ]; then
-  /etc/init.d/dnsmasq restart || true
-fi
-
-
-# Restart firewall
-if [ -x /etc/init.d/firewall ]; then
-  /etc/init.d/firewall restart || true
-fi
 
 log "Done."
 exit 0
