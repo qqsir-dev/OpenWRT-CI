@@ -34,7 +34,7 @@ Q_X86_PASS="$(sh_quote "$X86_PPPOE_PASS_BUILD")"
 Q_R68_USER="$(sh_quote "$R68_PPPOE_USER_BUILD")"
 Q_R68_PASS="$(sh_quote "$R68_PPPOE_PASS_BUILD")"
 
-TARGET_FILE="./package/base-files/files/etc/uci-defaults/99-custom-net"
+TARGET_FILE="./package/base-files/files/etc/uci-defaults/998-custom-net"
 mkdir -p "$(dirname "$TARGET_FILE")"
 
 cat > "$TARGET_FILE" <<EOF
