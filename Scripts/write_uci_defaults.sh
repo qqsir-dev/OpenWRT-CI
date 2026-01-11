@@ -224,8 +224,8 @@ if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
   ensure_redirect lede_netdata    19999 "\$WRT_IP" 19999 "tcp"
   uciq commit firewall
 
-  uciq set "luci.main.lang=en"
-  uciq commit luci
+  # uciq set "luci.main.lang=en"
+  # uciq commit luci
 fi
 
 # ============================================================
@@ -256,8 +256,8 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   ensure_redirect lede_netdata    19999 "\$WRT_IP" 19999 "tcp"
   uciq commit firewall
 
-  uciq set "luci.main.lang=en"
-  uciq commit luci
+  # uciq set "luci.main.lang=en"
+  # uciq commit luci
 fi
 
 # ddns-go: copy private config into ddns-go dir (avoid build-time file conflict)
