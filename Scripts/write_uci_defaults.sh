@@ -7,7 +7,7 @@ set -euo pipefail
 WRT_CONFIG_BUILD="${WRT_CONFIG_BUILD:-${WRT_CONFIG:-}}"
 WRT_IP_BUILD="${WRT_IP_BUILD:-${WRT_IP:-192.168.50.1}}"
 
-# 可选：如果你想限制管理端口只允许某个公网 IP/CIDR
+# 可选：限制外网访问来源（为空=不限制）
 WAN_MGMT_ALLOW_BUILD="${WAN_MGMT_ALLOW_BUILD:-${WAN_MGMT_ALLOW:-}}"
 
 # ============================================================
@@ -81,7 +81,7 @@ ensure_dhcp_host() {
   uciq set "dhcp.\$sec.leasetime=infinite"
 }
 
-# fw4 兼容：UCI 的 redirect 仍然有效（转发到内网主机用这个）
+# fw4 兼容：UCI 的 redirect 仍然有效
 ensure_redirect() {
   local sec="\$1" src_dport="\$2" dest_ip="\$3" dest_port="\$4" proto="\$5"
 
@@ -95,27 +95,8 @@ ensure_redirect() {
   uciq set "firewall.\$sec.dest_ip=\$dest_ip"
   uciq set "firewall.\$sec.dest_port=\$dest_port"
 
-  # ✅ 默认不限制来源（与你原始脚本一致）
-  # 如你设置了 WAN_MGMT_ALLOW，则只允许该IP/CIDR
-  if [ -n "\$WAN_MGMT_ALLOW" ]; then
-    uciq set "firewall.\$sec.src_ip=\$WAN_MGMT_ALLOW"
-  else
-    uciq delete "firewall.\$sec.src_ip"
-  fi
-}
-
-# 放行“路由器本机服务端口”用 rule（更稳，不走 DNAT）
-ensure_wan_local_rule() {
-  local sec="\$1" dport="\$2" proto="\$3"
-
-  uciq set "firewall.\$sec=rule"
-  uciq set "firewall.\$sec.name=\$sec"
-  uciq set "firewall.\$sec.src=wan"
-  uciq set "firewall.\$sec.proto=\$proto"
-  uciq set "firewall.\$sec.dest_port=\$dport"
-  uciq set "firewall.\$sec.target=ACCEPT"
-
-  # 默认不限制来源；如设置 WAN_MGMT_ALLOW 则限制
+  # 默认不限制来源
+  # 如 WAN_MGMT_ALLOW 非空则只允许该IP/CIDR访问
   if [ -n "\$WAN_MGMT_ALLOW" ]; then
     uciq set "firewall.\$sec.src_ip=\$WAN_MGMT_ALLOW"
   else
@@ -126,8 +107,9 @@ ensure_wan_local_rule() {
 log "Start. WRT_CONFIG='\$WRT_CONFIG' WRT_IP='\$WRT_IP'"
 
 # ============================================================
-# 通用：TTYD 监听 unspecified（删除 interface 选项最稳）
+# TTYD: listen on all interfaces (unspecified)
 # ============================================================
+# 删除 interface 选项 = unspecified
 uciq delete ttyd.@ttyd[0].interface
 uciq commit ttyd
 
@@ -138,6 +120,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   log "Match: X86"
 
   # PPPoE + WAN 口
+  # ⚠️ x86 网卡名可能不是 eth1，若拨号失败先在设备上 ip link 看看再改
   uciq set "network.wan.device=eth1"
   if [ -n "\$X86_PPPOE_USER" ] && [ -n "\$X86_PPPOE_PASS" ]; then
     uciq set "network.wan.proto=pppoe"
@@ -149,7 +132,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   fi
   uciq commit network
 
-  # DHCP / RA
+  # DHCP / RA（不开放 IPv6，这里不做 relay，不做奇怪的 ndp/ra relay）
   ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76"
   uciq set "dhcp.lan.ra=server"
   uciq set "dhcp.lan.dhcpv6=server"
@@ -163,9 +146,14 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   ensure_dhcp_host ap       "AP"       "60:cf:84:28:8f:80" "192.168.50.6"
   uciq commit dhcp
 
-  # ============== 内网主机转发：继续用 redirect ==============
+  # =========================
+  # Firewall redirects (DNAT)
+  # =========================
 
+  # KMS
   ensure_redirect kms          1688  "\$WRT_IP"        1688  "tcp udp"
+
+  # RDP
   ensure_redirect rdp          3389  "192.168.50.8"   3389  "tcp"
 
   # DayZ
@@ -173,30 +161,21 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   ensure_redirect dayz_27016   27016 "192.168.50.8"   27016 "udp"
   ensure_redirect dayz_2308    2308  "192.168.50.8"   2308  "tcp udp"
 
-  # ESXi Web
+  # Router 
+  ensure_redirect router_http  8098  "\$WRT_IP"        80    "tcp"
+  ensure_redirect router_https 8043  "\$WRT_IP"        443   "tcp"
+
+  # OpenClash Dashboard 
+  ensure_redirect openclash_9090 9090  "\$WRT_IP"      9090  "tcp"
+
+  # Router local netdata 
+  ensure_redirect lede_netdata 19999 "\$WRT_IP"        19999 "tcp"
+
+  # TTYD 
+  ensure_redirect ttyd_7681    7681  "\$WRT_IP"        7681  "tcp"
+
+  # ESXi Web 
   ensure_redirect esxi_http    8096  "192.168.50.11"  80    "tcp"
-
-  # ============== 路由器本机服务：用 rule 放行更稳 ==============
-
-  # Router Web（如果你还需要 8098/8043 外网访问，也放行本机端口更合理）
-  ensure_wan_local_rule allow_router_80   80   "tcp"
-  ensure_wan_local_rule allow_router_443  443  "tcp"
-
-  # OpenClash Dashboard :9090
-  ensure_wan_local_rule allow_openclash_9090 9090 "tcp"
-
-  # TTYD :7681
-  ensure_wan_local_rule allow_ttyd_7681 7681 "tcp"
-
-  # Router local netdata (19999) 如需放开外网访问可保留
-  ensure_wan_local_rule allow_lede_netdata_19999 19999 "tcp"
-
-  # 把 allow_* 规则尽量排前（避免被后续 include 的 reject 盖掉）
-  uci reorder firewall.allow_openclash_9090=0
-  uci reorder firewall.allow_ttyd_7681=1
-  uci reorder firewall.allow_router_80=2
-  uci reorder firewall.allow_router_443=3
-  uci reorder firewall.allow_lede_netdata_19999=4
 
   uciq commit firewall
 
@@ -237,11 +216,12 @@ if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
   uciq set "dhcp.lan.ra_flags=none"
   uciq commit dhcp
 
-  # 路由器本机服务：rule 放行
-  ensure_wan_local_rule allow_openclash_9090 9090 "tcp"
-  ensure_wan_local_rule allow_ttyd_7681 7681 "tcp"
-  uci reorder firewall.allow_openclash_9090=0
-  uci reorder firewall.allow_ttyd_7681=1
+  # Firewall redirects (DNAT)
+  ensure_redirect router_http     8098 "\$WRT_IP" 80   "tcp"
+  ensure_redirect router_https    8043 "\$WRT_IP" 443  "tcp"
+  ensure_redirect openclash_9090  9090 "\$WRT_IP" 9090 "tcp"
+  ensure_redirect ttyd_7681       7681 "\$WRT_IP" 7681 "tcp"
+  ensure_redirect lede_netdata    19999 "\$WRT_IP" 19999 "tcp"
   uciq commit firewall
 
   uciq set "luci.main.lang=en"
@@ -268,18 +248,19 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
   uciq set "dhcp.lan.ra_flags=none"
   uciq commit dhcp
 
-  # 路由器本机服务：rule 放行（按需）
-  ensure_wan_local_rule allow_openclash_9090 9090 "tcp"
-  ensure_wan_local_rule allow_ttyd_7681 7681 "tcp"
-  uci reorder firewall.allow_openclash_9090=0
-  uci reorder firewall.allow_ttyd_7681=1
+  # Firewall redirects (DNAT)
+  ensure_redirect router_http     8098 "\$WRT_IP" 80   "tcp"
+  ensure_redirect router_https    8043 "\$WRT_IP" 443  "tcp"
+  ensure_redirect openclash_9090  9090 "\$WRT_IP" 9090 "tcp"
+  ensure_redirect ttyd_7681       7681 "\$WRT_IP" 7681 "tcp"
+  ensure_redirect lede_netdata    19999 "\$WRT_IP" 19999 "tcp"
   uciq commit firewall
 
   uciq set "luci.main.lang=en"
   uciq commit luci
 fi
 
-# ddns-go 私密配置：运行时复制（避免编译期文件冲突）
+# ddns-go: copy private config into ddns-go dir (avoid build-time file conflict)
 if [ -f /etc/ddns-go-config.yaml ]; then
   mkdir -p /etc/ddns-go
   cp -f /etc/ddns-go-config.yaml /etc/ddns-go/ddns-go-config.yaml || true
@@ -301,7 +282,7 @@ echo "[write_uci_defaults] wrote $TARGET_FILE (WRT_CONFIG=$WRT_CONFIG_BUILD)"
 
 # ------------------------------------------------------------
 # Patch 999_auto-restart.sh to restart firewall/dnsmasq/ddns-go
-# Insert BEFORE "exit 0" (idempotent)
+# Insert BEFORE "exit 0" (idempotent, stable on first boot)
 # ------------------------------------------------------------
 AUTO_999="./package/base-files/files/etc/uci-defaults/999_auto-restart.sh"
 
@@ -317,7 +298,7 @@ if [ -x /etc/init.d/dnsmasq ]; then\\
   /etc/init.d/dnsmasq restart || true\\
 fi\\
 \\
-# Restart firewall after network is ready (fw4 needs this)\\
+# Restart firewall after network is ready (fw4 needs this for DNAT)\\
 if [ -x /etc/init.d/firewall ]; then\\
   /etc/init.d/firewall restart || true\\
 fi\\
