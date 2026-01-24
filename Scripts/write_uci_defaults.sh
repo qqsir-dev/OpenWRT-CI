@@ -282,11 +282,10 @@ echo "[write_uci_defaults] wrote $TARGET_FILE (WRT_CONFIG=$WRT_CONFIG_BUILD)"
 
 # ------------------------------------------------------------
 # Patch or create 999_auto-restart.sh to restart services
-# (idempotent, stable on first boot)
+# (idempotent, stable on first boot) -- awk-based, sed-safe
 # ------------------------------------------------------------
 UCI_DEFAULTS_DIR="./package/base-files/files/etc/uci-defaults"
 AUTO_999="${UCI_DEFAULTS_DIR}/999_auto-restart.sh"
-
 mkdir -p "$UCI_DEFAULTS_DIR"
 
 PATCH_MARK_BEGIN="# --- added by write_uci_defaults: stabilize first boot ---"
@@ -296,7 +295,6 @@ PATCH_PAYLOAD=$(cat <<'EOS'
 # --- added by write_uci_defaults: stabilize first boot ---
 # Ensure core services reload after first-boot network is ready
 
-# Some upstream 999 only restarts network/odhcpd/rpcd; keep them if present
 if [ -x /etc/init.d/network ]; then
   /etc/init.d/network restart || true
 fi
@@ -334,10 +332,8 @@ create_999() {
 
 EOF
 
-  # 插入 payload
   printf "%s\n\n" "$PATCH_PAYLOAD" >> "$AUTO_999"
 
-  # 统一 exit
   cat >> "$AUTO_999" <<'EOF'
 exit 0
 EOF
@@ -346,32 +342,41 @@ EOF
   echo "[write_uci_defaults] created $AUTO_999"
 }
 
-patch_999() {
+patch_999_awk() {
   chmod 0755 "$AUTO_999" || true
 
-  # 已经打过补丁就直接跳过
+  # 幂等：已存在则跳过
   if grep -qF "$PATCH_MARK_BEGIN" "$AUTO_999" 2>/dev/null; then
     echo "[write_uci_defaults] patch already present in $AUTO_999"
     return 0
   fi
 
-  # 如果文件里没有 exit 0，追加一个，保证 sed 插入点存在
+  # 如果没有 exit 0，就追加一个，确保插入点存在
   if ! grep -qE '^exit 0$' "$AUTO_999"; then
     printf "\nexit 0\n" >> "$AUTO_999"
   fi
 
-  # 插入到 exit 0 前
-  # macOS sed 和 GNU sed 兼容性不同，但你在 GitHub Actions 用的是 GNU sed
-  sed -i "/^exit 0/i\\
-\\
-$PATCH_PAYLOAD\\
-" "$AUTO_999"
+  local tmp
+  tmp="$(mktemp)"
 
+  # awk：遇到 exit 0 前插入 payload（一次）
+  awk -v payload="$PATCH_PAYLOAD" '
+    $0=="exit 0" && !done {
+      print payload
+      print ""
+      done=1
+    }
+    { print }
+  ' "$AUTO_999" > "$tmp"
+
+  mv "$tmp" "$AUTO_999"
+  chmod 0755 "$AUTO_999" || true
   echo "[write_uci_defaults] patched $AUTO_999"
 }
 
 if [ -f "$AUTO_999" ]; then
-  patch_999
+  patch_999_awk
 else
   create_999
 fi
+
