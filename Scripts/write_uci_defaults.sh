@@ -281,35 +281,97 @@ chmod 0755 "$TARGET_FILE"
 echo "[write_uci_defaults] wrote $TARGET_FILE (WRT_CONFIG=$WRT_CONFIG_BUILD)"
 
 # ------------------------------------------------------------
-# Patch 999_auto-restart.sh to restart firewall/dnsmasq/ddns-go
-# Insert BEFORE "exit 0" (idempotent, stable on first boot)
+# Patch or create 999_auto-restart.sh to restart services
+# (idempotent, stable on first boot)
 # ------------------------------------------------------------
-AUTO_999="./package/base-files/files/etc/uci-defaults/999_auto-restart.sh"
+UCI_DEFAULTS_DIR="./package/base-files/files/etc/uci-defaults"
+AUTO_999="${UCI_DEFAULTS_DIR}/999_auto-restart.sh"
 
-if [ -f "$AUTO_999" ]; then
+mkdir -p "$UCI_DEFAULTS_DIR"
+
+PATCH_MARK_BEGIN="# --- added by write_uci_defaults: stabilize first boot ---"
+PATCH_MARK_END="# --- end added by write_uci_defaults ---"
+
+PATCH_PAYLOAD=$(cat <<'EOS'
+# --- added by write_uci_defaults: stabilize first boot ---
+# Ensure core services reload after first-boot network is ready
+
+# Some upstream 999 only restarts network/odhcpd/rpcd; keep them if present
+if [ -x /etc/init.d/network ]; then
+  /etc/init.d/network restart || true
+fi
+if [ -x /etc/init.d/odhcpd ]; then
+  /etc/init.d/odhcpd restart || true
+fi
+if [ -x /etc/init.d/rpcd ]; then
+  /etc/init.d/rpcd restart || true
+fi
+
+# Restart dnsmasq so DHCP/DNS options take effect
+if [ -x /etc/init.d/dnsmasq ]; then
+  /etc/init.d/dnsmasq restart || true
+fi
+
+# Restart firewall after network is ready (fw4 needs this for DNAT)
+if [ -x /etc/init.d/firewall ]; then
+  /etc/init.d/firewall restart || true
+fi
+
+# Restart ddns-go after network/DNS is ready
+if [ -x /etc/init.d/ddns-go ]; then
+  /etc/init.d/ddns-go restart || true
+fi
+# --- end added by write_uci_defaults ---
+EOS
+)
+
+create_999() {
+  cat > "$AUTO_999" <<'EOF'
+#!/bin/sh
+
+# Created by write_uci_defaults.sh
+# Runs once at first boot (uci-defaults).
+
+EOF
+
+  # 插入 payload
+  printf "%s\n\n" "$PATCH_PAYLOAD" >> "$AUTO_999"
+
+  # 统一 exit
+  cat >> "$AUTO_999" <<'EOF'
+exit 0
+EOF
+
+  chmod 0755 "$AUTO_999"
+  echo "[write_uci_defaults] created $AUTO_999"
+}
+
+patch_999() {
   chmod 0755 "$AUTO_999" || true
 
-  if ! grep -q "added by write_uci_defaults: stabilize first boot" "$AUTO_999" 2>/dev/null; then
-    sed -i "/^exit 0/i\\
-\\
-# --- added by write_uci_defaults: stabilize first boot ---\\
-# Restart dnsmasq so DHCP/DNS options take effect\\
-if [ -x /etc/init.d/dnsmasq ]; then\\
-  /etc/init.d/dnsmasq restart || true\\
-fi\\
-\\
-# Restart firewall after network is ready (fw4 needs this for DNAT)\\
-if [ -x /etc/init.d/firewall ]; then\\
-  /etc/init.d/firewall restart || true\\
-fi\\
-\\
-# Restart ddns-go after network/DNS is ready\\
-if [ -x /etc/init.d/ddns-go ]; then\\
-  /etc/init.d/ddns-go restart || true\\
-fi\\
-# --- end added by write_uci_defaults ---\\
-" "$AUTO_999"
+  # 已经打过补丁就直接跳过
+  if grep -qF "$PATCH_MARK_BEGIN" "$AUTO_999" 2>/dev/null; then
+    echo "[write_uci_defaults] patch already present in $AUTO_999"
+    return 0
   fi
+
+  # 如果文件里没有 exit 0，追加一个，保证 sed 插入点存在
+  if ! grep -qE '^exit 0$' "$AUTO_999"; then
+    printf "\nexit 0\n" >> "$AUTO_999"
+  fi
+
+  # 插入到 exit 0 前
+  # macOS sed 和 GNU sed 兼容性不同，但你在 GitHub Actions 用的是 GNU sed
+  sed -i "/^exit 0/i\\
+\\
+$PATCH_PAYLOAD\\
+" "$AUTO_999"
+
+  echo "[write_uci_defaults] patched $AUTO_999"
+}
+
+if [ -f "$AUTO_999" ]; then
+  patch_999
 else
-  echo "[write_uci_defaults] WARN: $AUTO_999 not found, skip patch."
+  create_999
 fi
