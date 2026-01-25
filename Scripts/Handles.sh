@@ -21,7 +21,7 @@ if [ -d *"homeproxy"* ]; then
 
 	cd .. && rm -rf ./$HP_RULE/
 
-	cd $PKG_PATH && echo "homeproxy date has been updated!"
+	cd $PKG_PATH && echo "✅ homeproxy date has been updated!"
 fi
 
 # 预置OpenClash smart内核和数据
@@ -44,7 +44,7 @@ if [ -d *"OpenClash"* ]; then
 	    '.[] | select(.prerelease == true) | .assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n1)
 	
 	if [ -n "$ASSET_URL" ] && [ "$ASSET_URL" != "null" ]; then
-	    echo "Find the Smart Core file download link: $ASSET_URL"
+	    echo "✅ Find the Smart Core file download link: $ASSET_URL"
 	    FILENAME=$(basename "$ASSET_URL")
 	    echo "File Name: $FILENAME"
 	    
@@ -61,7 +61,7 @@ if [ -d *"OpenClash"* ]; then
 	    cut -d'"' -f4)
 	
 	if [ -n "$LATEST_MMDBURL" ]; then
-	    echo "The latest MMDB link: $LATEST_MMDBURL"
+	    echo "✅ The latest MMDB link: $LATEST_MMDBURL"
 	    GEO_MMDB="$LATEST_MMDBURL"
 
 	else
@@ -74,7 +74,7 @@ if [ -d *"OpenClash"* ]; then
 	    cut -d'"' -f4)
 	
 	if [ -n "$LATEST_GEOURL" ]; then
-	    echo "The Latest GEOSITE link: $LATEST_GEOURL"
+	    echo "✅ The Latest GEOSITE link: $LATEST_GEOURL"
 	    GEO_SITE="$LATEST_GEOURL"
 
 	else
@@ -86,15 +86,15 @@ if [ -d *"OpenClash"* ]; then
 
 	cd ./OpenClash/luci-app-openclash/root/etc/openclash/
 	curl -sL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin && echo "OpenClash Model.bin done!"
-	curl -sL -o Country.mmdb $GEO_MMDB && echo "OpenClash Country.mmdb done!"
-	curl -sL -o GeoSite.dat $GEO_SITE && echo "OpenClash GeoSite.dat done!"
+	curl -sL -o Country.mmdb $GEO_MMDB && echo "✅ OpenClash Country.mmdb done!"
+	curl -sL -o GeoSite.dat $GEO_SITE && echo "✅ OpenClash GeoSite.dat done!"
 # 	curl -sL -o GeoIP.dat $GEO_IP && echo "OpenClash GeoIP.dat done!"
 
 	mkdir ./core/ && cd ./core/
 	curl -sL -o $FILENAME $ASSET_URL
 	gunzip -c "$FILENAME" > clash_meta
 	if [ $? -eq 0 ]; then
-	    echo "OpenClash smart core done!"
+	    echo "✅ OpenClash smart core done!"
 	    chmod +x clash_meta
 	    rm -f "$FILENAME"
 	else
@@ -102,7 +102,7 @@ if [ -d *"OpenClash"* ]; then
 	    exit 0
 	fi
 
-	cd $PKG_PATH && echo "OpenClash smart core, Model and data have been updated!"
+	cd $PKG_PATH && echo "✅ OpenClash smart core, Model and data have been updated!"
 fi
 
 #修改argon主题字体和颜色
@@ -112,13 +112,13 @@ if [ -d *"luci-theme-argon"* ]; then
 	cd ./luci-theme-argon/
 	# 上传自己的 Argon 主题背景
 	cp -f $GITHUB_WORKSPACE/pics/bg1.jpg ./htdocs/luci-static/argon/img/bg1.jpg
- 	cd $PKG_PATH && echo "theme-argon background has been customized!"
+ 	cd $PKG_PATH && echo "✅ theme-argon background has been customized!"
 
  	cd ./luci-app-argon-config/
 # 	sed -i '/font-weight:/ {/normal\|!important/! s/\(font-weight:\s*\)[^;]*;/\1normal;/}' $(find ./luci-theme-argon -type f -iname "*.css")
 	sed -i "s/'0.5'/'0.3'/" ./root/etc/config/argon
 
-	cd $PKG_PATH && echo "theme-argon-config has been customized!"
+	cd $PKG_PATH && echo "✅ theme-argon-config has been customized!"
 fi
 
 #修改qca-nss-drv启动顺序
@@ -128,7 +128,7 @@ if [ -f "$NSS_DRV" ]; then
 
 	sed -i 's/START=.*/START=85/g' $NSS_DRV
 
-	cd $PKG_PATH && echo "qca-nss-drv has been fixed!"
+	cd $PKG_PATH && echo "✅ qca-nss-drv has been fixed!"
 fi
 
 #修改qca-nss-pbuf启动顺序
@@ -138,7 +138,7 @@ if [ -f "$NSS_PBUF" ]; then
 
 	sed -i 's/START=.*/START=86/g' $NSS_PBUF
 
-	cd $PKG_PATH && echo "qca-nss-pbuf has been fixed!"
+	cd $PKG_PATH && echo "✅ qca-nss-pbuf has been fixed!"
 fi
 
 #修复TailScale配置文件冲突
@@ -148,7 +148,7 @@ if [ -f "$TS_FILE" ]; then
 
 	sed -i '/\/files/d' $TS_FILE
 
-	cd $PKG_PATH && echo "tailscale has been fixed!"
+	cd $PKG_PATH && echo "✅ tailscale has been fixed!"
 fi
 
 #修复Rust编译失败Add commentMore actions
@@ -158,7 +158,7 @@ if [ -f "$RUST_FILE" ]; then
 
 	sed -i 's/ci-llvm=true/ci-llvm=false/g' $RUST_FILE
 
-	cd $PKG_PATH && echo "rust has been fixed!"
+	cd $PKG_PATH && echo "✅ rust has been fixed!"
 fi
 #修复DiskMan编译失败
 DM_FILE="./luci-app-diskman/applications/luci-app-diskman/Makefile"
@@ -167,7 +167,7 @@ if [ -f "$DM_FILE" ]; then
 
  	sed -i '/ntfs-3g-utils /d' $DM_FILE
 
-	cd $PKG_PATH && echo "diskman has been fixed!"
+	cd $PKG_PATH && echo "✅ diskman has been fixed!"
 fi
 #修复luci-app-netspeedtest相关问题
 if [ -d *"luci-app-netspeedtest"* ]; then
@@ -178,7 +178,7 @@ if [ -d *"luci-app-netspeedtest"* ]; then
 	sed -i '$a\exit 0' ./netspeedtest/files/99_netspeedtest.defaults
 	sed -i 's/ca-certificates/ca-bundle/g' ./speedtest-cli/Makefile
 
-	cd $PKG_PATH && echo "netspeedtest has been fixed!"
+	cd $PKG_PATH && echo "✅ netspeedtest has been fixed!"
 fi
 # Fix After clone sirpdboy/luci-app-ddns-go
 cd $PKG_PATH
