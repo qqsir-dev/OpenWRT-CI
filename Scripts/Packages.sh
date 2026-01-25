@@ -51,7 +51,7 @@ UPDATE_PACKAGE "luci-app-argon-config" "jerrykuku/luci-app-argon-config" "master
 UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf"
 # UPDATE_PACKAGE "kucat" "sirpdboy/luci-theme-kucat" "master"
 # UPDATE_PACKAGE "kucat-config" "sirpdboy/luci-app-kucat-config" "master"
-UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main" "" "luci-app-ddns-go"
+UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
 
 UPDATE_PACKAGE "homeproxy" "VIKINGYFY/homeproxy" "main"
 UPDATE_PACKAGE "momo" "nikkinikki-org/OpenWrt-momo" "main"
