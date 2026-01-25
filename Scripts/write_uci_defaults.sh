@@ -40,7 +40,7 @@ Q_X86_PASS="$(sh_quote "$X86_PPPOE_PASS_BUILD")"
 Q_R68_USER="$(sh_quote "$R68_PPPOE_USER_BUILD")"
 Q_R68_PASS="$(sh_quote "$R68_PPPOE_PASS_BUILD")"
 
-# ✅ 998：尽量最后执行，避免被 991 之类覆盖；999 负责统一 restart
+# 998：尽量最后执行，避免被 991 之类覆盖；999 负责统一 restart
 TARGET_FILE="./package/base-files/files/etc/uci-defaults/998_custom-net.sh"
 mkdir -p "$(dirname "$TARGET_FILE")"
 
@@ -264,7 +264,7 @@ fi
 if [ -f /etc/ddns-go-config.yaml ]; then
   mkdir -p /etc/ddns-go
   cp -f /etc/ddns-go-config.yaml /etc/ddns-go/ddns-go-config.yaml || true
-  echo "[write_uci_defaults] ddns-go-config.yaml coied to /etc/ddns-go"
+  echo "✅ [write_uci_defaults] ddns-go-config.yaml coied to /etc/ddns-go"
 fi
 
 # ddns-go: enable only (restart in 999 after network is ready)
@@ -340,7 +340,7 @@ exit 0
 EOF
 
   chmod 0755 "$AUTO_999"
-  echo "[write_uci_defaults] created $AUTO_999"
+  echo "✅ [write_uci_defaults] created $AUTO_999"
 }
 
 patch_999_awk() {
@@ -348,7 +348,7 @@ patch_999_awk() {
 
   # 幂等：已存在则跳过
   if grep -qF "$PATCH_MARK_BEGIN" "$AUTO_999" 2>/dev/null; then
-    echo "[write_uci_defaults] patch already present in $AUTO_999"
+    echo "✅ [write_uci_defaults] patch already present in $AUTO_999"
     return 0
   fi
 
@@ -372,7 +372,7 @@ patch_999_awk() {
 
   mv "$tmp" "$AUTO_999"
   chmod 0755 "$AUTO_999" || true
-  echo "[write_uci_defaults] patched $AUTO_999"
+  echo "✅ [write_uci_defaults] patched $AUTO_999"
 }
 
 if [ -f "$AUTO_999" ]; then
