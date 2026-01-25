@@ -182,7 +182,7 @@ if [ -d *"luci-app-netspeedtest"* ]; then
 fi
 # Fix After clone sirpdboy/luci-app-ddns-go
 if [ -f "ddns-go/luci-app-ddns-go/root/etc/config" ]; then
-  rm -f "ddns-go/luci-app-ddns-go/root/etc/config"
-  echo "✅ Removed ddns-go/luci-app-ddns-go/root/etc/config to avoid conffile conflict"
+  rm -rf ./ddns-go/luci-app-ddns-go/root/etc/config
+  cd $PKG_PATH && echo "✅ Removed ddns-go/luci-app-ddns-go/root/etc/config to avoid conffile conflict"
 fi
 
