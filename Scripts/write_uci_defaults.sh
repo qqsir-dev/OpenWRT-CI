@@ -264,6 +264,7 @@ fi
 if [ -f /etc/ddns-go-config.yaml ]; then
   mkdir -p /etc/ddns-go
   cp -f /etc/ddns-go-config.yaml /etc/ddns-go/ddns-go-config.yaml || true
+  echo "[write_uci_defaults] ddns-go-config.yaml coied to /etc/ddns-go"
 fi
 
 # ddns-go: enable only (restart in 999 after network is ready)
