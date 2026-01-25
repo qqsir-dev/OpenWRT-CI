@@ -180,11 +180,9 @@ if [ -d *"luci-app-netspeedtest"* ]; then
 
 	cd $PKG_PATH && echo "netspeedtest has been fixed!"
 fi
-# After clone sirpdboy/luci-app-ddns-go (any location)
-found="$(find ./ -type f -path "*/luci-app-ddns-go/root/etc/config" 2>/dev/null | head -n1 || true)"
-if [ -n "$found" ]; then
-  rm -f "$found"
-  echo "✅ Removed: $found (avoid /etc/config ownership conflict)"
-else
-  echo "ℹ️ No luci-app-ddns-go/root/etc/config found, skip"
+# Fix After clone sirpdboy/luci-app-ddns-go
+if [ -f "ddns-go/luci-app-ddns-go/root/etc/config" ]; then
+  rm -f "ddns-go/luci-app-ddns-go/root/etc/config"
+  echo "✅ Removed ddns-go/luci-app-ddns-go/root/etc/config to avoid conffile conflict"
 fi
+
