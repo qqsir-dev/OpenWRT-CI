@@ -282,9 +282,8 @@ jobs:
           fi
 
           "$GITHUB_WORKSPACE/Scripts/Settings.sh"
-
-          # 这里不再 make clean，只做 defconfig
-          make defconfig -j"$(nproc)"
+          
+          make defconfig -j$(nproc) && make clean -j$(nproc)
 
       - name: Download Packages
         if: env.WRT_TEST != 'true'
