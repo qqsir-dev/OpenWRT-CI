@@ -282,8 +282,11 @@ jobs:
           fi
 
           "$GITHUB_WORKSPACE/Scripts/Settings.sh"
+
+          # ✅ 仅在内核模块缺失这类问题时，清理内核相关缓存
+          rm -rf build_dir/target-*/linux-* staging_dir/target-*
           
-          make defconfig -j$(nproc) && make clean -j$(nproc)
+          make defconfig -j"$(nproc)"
 
       - name: Download Packages
         if: env.WRT_TEST != 'true'
