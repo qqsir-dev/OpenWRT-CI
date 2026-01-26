@@ -264,7 +264,7 @@ fi
 if [ -f /etc/ddns-go-config.yaml ]; then
   mkdir -p /etc/ddns-go
   cp -f /etc/ddns-go-config.yaml /etc/ddns-go/ddns-go-config.yaml || true
-  echo "✅ [write_uci_defaults] ddns-go-config.yaml coied to /etc/ddns-go"
+  echo "[write_uci_defaults] ddns-go-config.yaml coied to /etc/ddns-go"
 fi
 
 # ddns-go: enable only (restart in 999 after network is ready)
@@ -279,7 +279,7 @@ exit 0
 EOF
 
 chmod 0755 "$TARGET_FILE"
-echo "[write_uci_defaults] wrote $TARGET_FILE (WRT_CONFIG=$WRT_CONFIG_BUILD)"
+echo "✅ [write_uci_defaults] wrote $TARGET_FILE (WRT_CONFIG=$WRT_CONFIG_BUILD)"
 
 # ------------------------------------------------------------
 # Patch or create 999_auto-restart.sh to restart services
