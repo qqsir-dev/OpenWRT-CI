@@ -202,20 +202,6 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Sanity check Kconfig (after feeds install)
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd ./wrt
-      
-          # 生成/刷新 config-package.in（触发错误就能定位）
-          make defconfig V=s
-      
-          # 如果没报错，再粗查一下是否有明显的自依赖模式（可选）
-          if grep -R --line-number -E "depends on PACKAGE_(luci|dockerd|gnunet|default-settings)\b" feeds package 2>/dev/null | head; then
-            echo "Found suspicious depends lines (review above)."
-          fi
-
       - name: Custom Packages
         shell: bash
         run: |
