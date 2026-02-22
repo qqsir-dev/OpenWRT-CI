@@ -119,12 +119,6 @@ jobs:
           if [ -f "$PROJECT_MIRRORS_FILE" ]; then
             sed -i '/.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
           fi
-
-      - name: Workaround: disable fortify for libubox
-        run: |
-          cd ./wrt
-          grep -q '^PKG_FORTIFY_SOURCE:=0' package/libs/libubox/Makefile || \
-            sed -i '1iPKG_FORTIFY_SOURCE:=0\n' package/libs/libubox/Makefile
       
       - name: Check Scripts
         shell: bash
