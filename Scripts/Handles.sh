@@ -180,15 +180,3 @@ if [ -d *"luci-app-netspeedtest"* ]; then
 
 	cd $PKG_PATH && echo "✅ netspeedtest has been fixed!"
 fi
-# Fix After clone sirpdboy/luci-app-ddns-go
-cd $PKG_PATH
-find . -path "*/luci-app-ddns-go/root/etc/config*" || true
-# Remove luci-app-ddns-go default config dir to avoid conffile conflict
-FOUND_DIR="$(find . -type d -path "*/luci-app-ddns-go/root/etc/config" 2>/dev/null | head -n1 || true)"
-if [ -n "$FOUND_DIR" ]; then
-  rm -rf "$FOUND_DIR"
-  echo "✅ Removed directory: $FOUND_DIR"
-  find . -path "*/luci-app-ddns-go/root/etc/config*" || true
-else
-  echo "ℹ️ luci-app-ddns-go/root/etc/config not found, skip"
-fi
