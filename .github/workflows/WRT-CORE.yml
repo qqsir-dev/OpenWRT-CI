@@ -120,6 +120,14 @@ jobs:
             sed -i '/.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
           fi
 
+      - name: Upgrade fortify-headers in toolchain
+        run: |
+          cd ./wrt/
+          # 升级 fortify-headers 到 2.3.3（核心）
+          curl -L https://github.com/openwrt/openwrt/commit/6268692.patch | git am
+          # （可选）增加 _FORTIFY_SOURCE=3 选项支持
+          curl -L https://github.com/openwrt/openwrt/commit/93f8662.patch | git am
+      
       - name: Check Scripts
         shell: bash
         run: |
