@@ -129,7 +129,15 @@ jobs:
           curl -L https://github.com/openwrt/openwrt/commit/6268692.patch | git am
           # Check fortify config options
           # grep -R "FORTIFY_SOURCE" -n config/Config-build.in include/hardening.mk || true
+          echo "=== .config fortify ==="
+          grep -n "PKG_FORTIFY_SOURCE" .config || true
       
+          echo "=== hardening.mk fortify ==="
+          grep -n "FORTIFY_SOURCE" include/hardening.mk || true
+      
+          echo "=== fortify-headers Makefile ==="
+          sed -n '1,120p' toolchain/fortify-headers/Makefile | sed -n 's/^PKG_/# PKG_/p' || true
+          
       - name: Check Scripts
         shell: bash
         run: |
