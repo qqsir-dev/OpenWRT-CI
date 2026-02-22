@@ -196,7 +196,7 @@ fi
 LIBUBOX_MK="${PKG_PATH}/libs/libubox/Makefile"
 
 if [ ! -f "$LIBUBOX_MK" ]; then
-  echo "ERROR: libubox Makefile not found: $LIBUBOX_MK"
+  echo "ℹ️ ERROR: libubox Makefile not found: $LIBUBOX_MK"
   exit 1
 fi
 
@@ -204,9 +204,9 @@ fi
 if grep -qE '^[[:space:]]*PKG_FORTIFY_SOURCE[[:space:]]*:?=' "$LIBUBOX_MK"; then
   # 如果已经有 PKG_FORTIFY_SOURCE 定义，强制改成 0
   sed -i -E 's/^[[:space:]]*PKG_FORTIFY_SOURCE[[:space:]]*:?=.*/PKG_FORTIFY_SOURCE:=0/' "$LIBUBOX_MK"
-  echo "Patched: set existing PKG_FORTIFY_SOURCE:=0 in libubox"
+  echo "✅ Patched: set existing PKG_FORTIFY_SOURCE:=0 in libubox"
 else
   # 没有就插入到文件开头（最稳，不依赖具体 Makefile 结构）
   sed -i '1iPKG_FORTIFY_SOURCE:=0\n' "$LIBUBOX_MK"
-  echo "Patched: inserted PKG_FORTIFY_SOURCE:=0 into libubox"
+  echo "✅ Patched: inserted PKG_FORTIFY_SOURCE:=0 into libubox"
 fi
