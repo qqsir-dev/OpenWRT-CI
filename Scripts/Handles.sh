@@ -192,32 +192,3 @@ if [ -n "$FOUND_DIR" ]; then
 else
   echo "ℹ️ luci-app-ddns-go/root/etc/config not found, skip"
 fi
-
-patch_fortify_off() {
-    local mk="$1"
-
-    if [ ! -f "$mk" ]; then
-        echo "ℹ️ Skip (not found): $mk"
-        return
-    fi
-
-    if grep -qE '^[[:space:]]*PKG_FORTIFY_SOURCE[[:space:]]*:?=' "$mk"; then
-        # 已存在 → 强制改成 0
-        sed -i -E \
-          's/^[[:space:]]*PKG_FORTIFY_SOURCE[[:space:]]*:?=.*/PKG_FORTIFY_SOURCE:=0/' \
-          "$mk"
-        echo "✅ Updated PKG_FORTIFY_SOURCE:=0 in $mk"
-    else
-        # 不存在 → 插入到文件开头
-        sed -i '1iPKG_FORTIFY_SOURCE:=0\n' "$mk"
-        echo "✅ Inserted PKG_FORTIFY_SOURCE:=0 into $mk"
-    fi
-
-    # 输出确认
-    grep -n '^PKG_FORTIFY_SOURCE' "$mk" || true
-}
-
-patch_fortify_off "$PKG_PATH/libs/libubox/Makefile"
-patch_fortify_off "$PKG_PATH/system/ubus/Makefile"
-
-echo "✅ Fortify patch completed."
