@@ -193,20 +193,31 @@ else
   echo "ℹ️ luci-app-ddns-go/root/etc/config not found, skip"
 fi
 
-LIBUBOX_MK="${PKG_PATH}/libs/libubox/Makefile"
+patch_fortify_off() {
+    local mk="$1"
 
-if [ ! -f "$LIBUBOX_MK" ]; then
-  echo "ℹ️ ERROR: libubox Makefile not found: $LIBUBOX_MK"
-  exit 1
-fi
+    if [ ! -f "$mk" ]; then
+        echo "ℹ️ Skip (not found): $mk"
+        return
+    fi
 
-# 只对 libubox 禁用 fortify（幂等）
-if grep -qE '^[[:space:]]*PKG_FORTIFY_SOURCE[[:space:]]*:?=' "$LIBUBOX_MK"; then
-  # 如果已经有 PKG_FORTIFY_SOURCE 定义，强制改成 0
-  sed -i -E 's/^[[:space:]]*PKG_FORTIFY_SOURCE[[:space:]]*:?=.*/PKG_FORTIFY_SOURCE:=0/' "$LIBUBOX_MK"
-  echo "✅ Patched: set existing PKG_FORTIFY_SOURCE:=0 in libubox"
-else
-  # 没有就插入到文件开头（最稳，不依赖具体 Makefile 结构）
-  sed -i '1iPKG_FORTIFY_SOURCE:=0\n' "$LIBUBOX_MK"
-  echo "✅ Patched: inserted PKG_FORTIFY_SOURCE:=0 into libubox"
-fi
+    if grep -qE '^[[:space:]]*PKG_FORTIFY_SOURCE[[:space:]]*:?=' "$mk"; then
+        # 已存在 → 强制改成 0
+        sed -i -E \
+          's/^[[:space:]]*PKG_FORTIFY_SOURCE[[:space:]]*:?=.*/PKG_FORTIFY_SOURCE:=0/' \
+          "$mk"
+        echo "✅ Updated PKG_FORTIFY_SOURCE:=0 in $mk"
+    else
+        # 不存在 → 插入到文件开头
+        sed -i '1iPKG_FORTIFY_SOURCE:=0\n' "$mk"
+        echo "✅ Inserted PKG_FORTIFY_SOURCE:=0 into $mk"
+    fi
+
+    # 输出确认
+    grep -n '^PKG_FORTIFY_SOURCE' "$mk" || true
+}
+
+patch_fortify_off "$PKG_PATH/libs/libubox/Makefile"
+patch_fortify_off "$PKG_PATH/system/ubus/Makefile"
+
+echo "✅ Fortify patch completed."
