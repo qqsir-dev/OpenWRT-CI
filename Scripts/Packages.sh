@@ -61,7 +61,7 @@ UPDATE_PACKAGE "openclash" "vernesong/OpenClash" "dev" "pkg"
 UPDATE_PACKAGE "passwall" "Openwrt-Passwall/openwrt-passwall" "main" "pkg"
 UPDATE_PACKAGE "passwall2" "Openwrt-Passwall/openwrt-passwall2" "main" "pkg"
 
-UPDATE_PACKAGE "luci-app-tailscale" "Tokisaki-Galaxy/luci-app-tailscale-community" "master"
+UPDATE_PACKAGE "luci-app-tailscale" "asvow/luci-app-tailscale" "main"
 
 UPDATE_PACKAGE "diskman" "lisaac/luci-app-diskman" "master"
 UPDATE_PACKAGE "easytier" "EasyTier/luci-app-easytier" "main"
