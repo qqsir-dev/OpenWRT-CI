@@ -130,7 +130,7 @@ jobs:
       - name: Check Caches
         id: check-cache
         # if: env.WRT_TEST != 'true' && !contains(env.WRT_CONFIG, 'ROCK')
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: ${{ env.WRT_CONFIG }}-${{ env.WRT_INFO }}
           restore-keys: |
