@@ -107,9 +107,7 @@ fi
 
 #修改argon主题字体和颜色
 if [ -d *"luci-theme-argon"* ]; then
-	echo " "
-
-	cd ./luci-theme-argon/
+	echo " " && cd ./luci-theme-argon/
 	# 上传自己的 Argon 主题背景
 	cp -f $GITHUB_WORKSPACE/pics/bg1.jpg ./htdocs/luci-static/argon/img/bg1.jpg
  	cd $PKG_PATH && echo "✅ theme-argon background has been customized!"
@@ -119,6 +117,15 @@ if [ -d *"luci-theme-argon"* ]; then
 	sed -i "s/'0.5'/'0.3'/" ./root/etc/config/argon
 
 	cd $PKG_PATH && echo "✅ theme-argon-config has been customized!"
+fi
+
+#修改mini-diskmanager菜单位置
+if [ -d *"luci-app-mini-diskmanager"* ]; then
+	echo " " && cd ./luci-app-mini-diskmanager/
+
+	sed -i "s/services/system/g" ./luci-app-mini-diskmanager/root/usr/share/luci/menu.d/luci-app-mini-diskmanager.json
+
+	cd $PKG_PATH && echo "mini-diskmanager has been fixed!"
 fi
 
 #修改qca-nss-drv启动顺序
