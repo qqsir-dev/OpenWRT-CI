@@ -148,17 +148,32 @@ if [ -f "$NSS_PBUF" ]; then
 	cd $PKG_PATH && echo "✅ qca-nss-pbuf has been fixed!"
 fi
 
+# 修复 luci-app-netspeedtest Python 依赖问题
+LUCI_NETSPEEDTEST_MAKEFILE=$(find $PKG_PATH -path "*/luci-app-netspeedtest/Makefile" | head -n 1)
+
+if [ -n "$LUCI_NETSPEEDTEST_MAKEFILE" ]; then
+    echo "🔧 Fixing luci-app-netspeedtest Python dependencies..."
+    echo "📄 Found: $LUCI_NETSPEEDTEST_MAKEFILE"
+
+    sed -i 's/+python3-email//g' "$LUCI_NETSPEEDTEST_MAKEFILE"
+    sed -i 's/+python3-pkg-resources/+python3-setuptools/g' "$LUCI_NETSPEEDTEST_MAKEFILE"
+
+    cd $PKG_PATH && echo "✅ netspeedtest dependency fixed!"
+else
+    cd $PKG_PATH && echo "ℹ️ luci-app-netspeedtest not found in package/"
+fi
+
 #修复TailScale配置文件冲突
-LUCI_TS_CONFIG=$(find $GITHUB_WORKSPACE/wrt/feeds/ -path "*/luci-app-tailscale/files/etc/config/tailscale")
+LUCI_TS_CONFIG=$(find $PKG_PATH -path "*/luci-app-tailscale/files/etc/config/tailscale")
 
 if [ -n "$LUCI_TS_CONFIG" ]; then
     echo "🔧 Removing duplicate tailscale config from luci-app..."
 
     rm -f $LUCI_TS_CONFIG
 
-    echo "✅ Fixed!"
+    cd $PKG_PATH && echo "✅ Fixed!"
 else
-    echo "ℹ️ No conflict file found"
+    cd $PKG_PATH && echo "ℹ️ No conflict file found"
 fi
 
 #修复Rust编译失败Add commentMore actions
