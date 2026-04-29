@@ -164,16 +164,13 @@ else
 fi
 
 #修复TailScale配置文件冲突
-LUCI_TS_CONFIG=$(find $PKG_PATH -path "*/luci-app-tailscale/files/etc/config/tailscale")
+TS_FILE=$(find ../feeds/packages/ -maxdepth 3 -type f -wholename "*/tailscale/Makefile")
+if [ -f "$TS_FILE" ]; then
+	echo " "
 
-if [ -n "$LUCI_TS_CONFIG" ]; then
-    echo "🔧 Removing duplicate tailscale config from luci-app..."
+	sed -i '/\/files/d' $TS_FILE
 
-    rm -f $LUCI_TS_CONFIG
-
-    cd $PKG_PATH && echo "✅ Fixed!"
-else
-    cd $PKG_PATH && echo "ℹ️ No conflict file found"
+	cd $PKG_PATH && echo "tailscale has been fixed!"
 fi
 
 #修复Rust编译失败Add commentMore actions
