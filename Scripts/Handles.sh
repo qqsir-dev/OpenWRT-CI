@@ -125,7 +125,7 @@ if [ -d *"luci-app-mini-diskmanager"* ]; then
 
 	sed -i "s/services/system/g" ./luci-app-mini-diskmanager/root/usr/share/luci/menu.d/luci-app-mini-diskmanager.json
 
-	cd $PKG_PATH && echo "mini-diskmanager has been fixed!"
+	cd $PKG_PATH && echo "✅ mini-diskmanager has been fixed!"
 fi
 
 #修改qca-nss-drv启动顺序
