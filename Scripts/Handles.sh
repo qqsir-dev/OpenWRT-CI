@@ -26,83 +26,126 @@ fi
 
 # 预置OpenClash smart内核和数据
 if [ -d *"OpenClash"* ]; then
-# 	CORE_VER="https://raw.githubusercontent.com/vernesong/OpenClash/core/dev/core_version"
-	CORE_TYPE=$(echo $WRT_CONFIG | grep -Eiq "64|86" && echo "amd64" || echo "arm64")
-# 	CORE_TUN_VER=$(curl -sL $CORE_VER | sed -n "2{s/\r$//;p;q}")
 
-	# 设置仓库信息
-	OWNER="vernesong"
-	REPO="mihomo"
-	FILE_PATTERN="mihomo-linux-$CORE_TYPE-alpha-smart.*\\.gz"
-	
-	# 获取最新的预发布的Smart核心版本信息
-	echo "Retrieving the latest pre-release version information for OpenClash Smart Core..."
-	RELEASE_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5")
-	
-	# 提取包含所需资源文件的最新预发布版本资源信息
-	ASSET_URL=$(echo "$RELEASE_JSON" | jq -r --arg pattern "$FILE_PATTERN" \
-	    '.[] | select(.prerelease == true) | .assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n1)
-	
-	if [ -n "$ASSET_URL" ] && [ "$ASSET_URL" != "null" ]; then
-	    echo "✅ Find the Smart Core file download link: $ASSET_URL"
-	    FILENAME=$(basename "$ASSET_URL")
-	    echo "File Name: $FILENAME"
-	    
-	else
-	    echo "No matching pre-release resource file found."
-	    echo "Attempt to directly list all resource files for inspection:"
-	    echo "     curl -s 'https://api.github.com/repos/$OWNER/$REPO/releases?per_page=3' | jq -r '.[] | \"\\(.name):\", (.assets[] | \"  \\(.name)\")')'"
-		exit 0
-	fi
+    CORE_TYPE=$(echo $WRT_CONFIG | grep -Eiq "64|86" && echo "amd64" || echo "arm64")
 
-	# 获取最新发布的Country.mmdb下载链接
-	LATEST_MMDBURL=$(curl -s "https://api.github.com/repos/alecthw/mmdb_china_ip_list/releases/latest" | \
-	    grep -o '"browser_download_url": *"[^"]*Country\.mmdb"' | \
-	    cut -d'"' -f4)
-	
-	if [ -n "$LATEST_MMDBURL" ]; then
-	    echo "✅ The latest MMDB link: $LATEST_MMDBURL"
-	    GEO_MMDB="$LATEST_MMDBURL"
+    OWNER="vernesong"
+    REPO="mihomo"
 
-	else
-	    echo "No matching Country.mmdb found."
-		exit 0
-	fi
-	# 获取最新发布的geosite.dat下载链接
-	LATEST_GEOURL=$(curl -s "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest" | \
-	    grep -o '"browser_download_url": *"[^"]*geosite\.dat"' | \
-	    cut -d'"' -f4)
-	
-	if [ -n "$LATEST_GEOURL" ]; then
-	    echo "✅ The Latest GEOSITE link: $LATEST_GEOURL"
-	    GEO_SITE="$LATEST_GEOURL"
+    # ✅ 同时支持 .gz 和 .pkg.tar.zst
+    FILE_PATTERN="mihomo-linux-$CORE_TYPE-alpha-smart.*\\.(gz|pkg\\.tar\\.zst)"
 
-	else
-	    echo "No matching geosite.dat found."
-		exit 0
-	fi
+    echo "🔍 Retrieving the latest pre-release version for OpenClash Smart Core..."
 
-# 	GEO_IP="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geoip.dat"
+    RELEASE_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5")
 
-	cd ./OpenClash/luci-app-openclash/root/etc/openclash/
-	curl -sL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin && echo "OpenClash Model.bin done!"
-	curl -sL -o Country.mmdb $GEO_MMDB && echo "✅ OpenClash Country.mmdb done!"
-	curl -sL -o GeoSite.dat $GEO_SITE && echo "✅ OpenClash GeoSite.dat done!"
-# 	curl -sL -o GeoIP.dat $GEO_IP && echo "OpenClash GeoIP.dat done!"
+    ASSET_URL=$(echo "$RELEASE_JSON" | jq -r --arg pattern "$FILE_PATTERN" \
+        '.[] | select(.prerelease == true) | .assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n1)
 
-	mkdir ./core/ && cd ./core/
-	curl -sL -o $FILENAME $ASSET_URL
-	gunzip -c "$FILENAME" > clash_meta
-	if [ $? -eq 0 ]; then
-	    echo "✅ OpenClash smart core done!"
-	    chmod +x clash_meta
-	    rm -f "$FILENAME"
-	else
-	    echo "Decompression failed!"
-	    exit 0
-	fi
+    if [ -z "$ASSET_URL" ] || [ "$ASSET_URL" = "null" ]; then
+        echo "❌ No matching pre-release Smart Core found!"
+        exit 1
+    fi
 
-	cd $PKG_PATH && echo "✅ OpenClash smart core, Model and data have been updated!"
+    echo "✅ Found Smart Core: $ASSET_URL"
+
+    FILENAME=$(basename "$ASSET_URL")
+
+    # ========================
+    # 获取 MMDB
+    # ========================
+    LATEST_MMDBURL=$(curl -s "https://api.github.com/repos/alecthw/mmdb_china_ip_list/releases/latest" | \
+        grep -o '"browser_download_url": *"[^"]*Country\.mmdb"' | \
+        cut -d'"' -f4)
+
+    if [ -z "$LATEST_MMDBURL" ]; then
+        echo "❌ Failed to fetch Country.mmdb"
+        exit 1
+    fi
+
+    echo "✅ MMDB: $LATEST_MMDBURL"
+
+    # ========================
+    # 获取 GEO SITE
+    # ========================
+    LATEST_GEOURL=$(curl -s "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest" | \
+        grep -o '"browser_download_url": *"[^"]*geosite\.dat"' | \
+        cut -d'"' -f4)
+
+    if [ -z "$LATEST_GEOURL" ]; then
+        echo "❌ Failed to fetch geosite.dat"
+        exit 1
+    fi
+
+    echo "✅ GeoSite: $LATEST_GEOURL"
+
+    # ========================
+    # 下载数据文件
+    # ========================
+    cd ./OpenClash/luci-app-openclash/root/etc/openclash/ || exit 1
+
+    curl -fL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin \
+        || { echo "❌ Model.bin download failed"; exit 1; }
+
+    curl -fL -o Country.mmdb "$LATEST_MMDBURL" \
+        || { echo "❌ Country.mmdb download failed"; exit 1; }
+
+    curl -fL -o GeoSite.dat "$LATEST_GEOURL" \
+        || { echo "❌ GeoSite.dat download failed"; exit 1; }
+
+    echo "✅ Data files ready"
+
+    # ========================
+    # 下载核心
+    # ========================
+    mkdir -p ./core/ && cd ./core/ || exit 1
+
+    curl -fL -o "$FILENAME" "$ASSET_URL" \
+        || { echo "❌ Core download failed"; exit 1; }
+
+    echo "📦 Downloaded: $FILENAME"
+
+    # ========================
+    # 解压核心（兼容两种格式）
+    # ========================
+    if [[ "$FILENAME" == *.gz ]]; then
+        echo "📦 Extracting gzip core..."
+        gunzip -c "$FILENAME" > clash_meta || { echo "❌ gzip extraction failed"; exit 1; }
+
+    elif [[ "$FILENAME" == *.pkg.tar.zst ]]; then
+        echo "📦 Extracting zst package..."
+
+        if ! command -v zstd >/dev/null 2>&1; then
+            echo "📥 Installing zstd..."
+            sudo apt-get update && sudo apt-get install -y zstd
+        fi
+
+        tar -I zstd -xvf "$FILENAME" || { echo "❌ tar extraction failed"; exit 1; }
+
+        CORE_BIN=$(find . -type f -name "mihomo*" | head -n1)
+
+        if [ -z "$CORE_BIN" ]; then
+            echo "❌ mihomo binary not found!"
+            exit 1
+        fi
+
+        mv "$CORE_BIN" clash_meta
+
+    else
+        echo "❌ Unsupported core format: $FILENAME"
+        exit 1
+    fi
+
+    chmod +x clash_meta || { echo "❌ chmod failed"; exit 1; }
+
+    rm -f "$FILENAME"
+
+    echo "🎉 OpenClash Smart Core installed successfully!"
+
+    cd $PKG_PATH || exit 1
+
+    echo "✅ OpenClash core & data update completed!"
+
 fi
 
 #修改argon主题字体和颜色
