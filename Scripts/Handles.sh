@@ -32,22 +32,53 @@ if [ -d *"OpenClash"* ]; then
     OWNER="vernesong"
     REPO="mihomo"
 
-    # ✅ 同时支持 .gz 和 .pkg.tar.zst
-    FILE_PATTERN="mihomo-linux-$CORE_TYPE-alpha-smart.*\\.(gz|pkg\\.tar\\.zst)"
-
-    echo "🔍 Retrieving the latest pre-release version for OpenClash Smart Core..."
+    echo "🔍 Fetching OpenClash Smart Core (Linux-$CORE_TYPE)..."
 
     RELEASE_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5")
 
-    ASSET_URL=$(echo "$RELEASE_JSON" | jq -r --arg pattern "$FILE_PATTERN" \
-        '.[] | select(.prerelease == true) | .assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n1)
+    # ========================
+    # 获取所有候选（只要 .gz + alpha-smart）
+    # ========================
+    CANDIDATES=$(echo "$RELEASE_JSON" | jq -r --arg arch "$CORE_TYPE" '
+        .[]
+        | select(.prerelease == true)
+        | .assets[]
+        | select(.name | test("mihomo-linux-" + $arch + "-v[0-9]+-.*alpha-smart.*\\.gz"))
+        | "\(.name)|\(.browser_download_url)"
+    ')
 
-    if [ -z "$ASSET_URL" ] || [ "$ASSET_URL" = "null" ]; then
-        echo "❌ No matching pre-release Smart Core found!"
+    if [ -z "$CANDIDATES" ]; then
+        echo "❌ No Smart Core candidates found!"
         exit 1
     fi
 
-    echo "✅ Found Smart Core: $ASSET_URL"
+    echo "🔎 Candidates:"
+    echo "$CANDIDATES"
+
+    # ========================
+    # 按版本号排序（取最大 v）
+    # ========================
+    SELECT_RESULT=$(echo "$CANDIDATES" | awk -F'|' '
+    {
+        name=$1
+        url=$2
+        match(name, /-v([0-9]+)-/, arr)
+        ver=arr[1]
+        print ver "|" url "|" name
+    }
+    ' | sort -t'|' -k1,1nr | head -n1)
+
+    ASSET_URL=$(echo "$SELECT_RESULT" | cut -d'|' -f2)
+    SELECTED_NAME=$(echo "$SELECT_RESULT" | cut -d'|' -f3)
+
+    if [ -z "$ASSET_URL" ]; then
+        echo "❌ Failed to select Smart Core!"
+        exit 1
+    fi
+
+    echo "✅ Selected highest version core:"
+    echo "📦 $SELECTED_NAME"
+    echo "🔗 $ASSET_URL"
 
     FILENAME=$(basename "$ASSET_URL")
 
@@ -66,7 +97,7 @@ if [ -d *"OpenClash"* ]; then
     echo "✅ MMDB: $LATEST_MMDBURL"
 
     # ========================
-    # 获取 GEO SITE
+    # 获取 GeoSite
     # ========================
     LATEST_GEOURL=$(curl -s "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest" | \
         grep -o '"browser_download_url": *"[^"]*geosite\.dat"' | \
@@ -106,39 +137,27 @@ if [ -d *"OpenClash"* ]; then
     echo "📦 Downloaded: $FILENAME"
 
     # ========================
-    # 解压核心（兼容两种格式）
+    # 解压（仅支持 gz）
     # ========================
     if [[ "$FILENAME" == *.gz ]]; then
-        echo "📦 Extracting gzip core..."
-        gunzip -c "$FILENAME" > clash_meta || { echo "❌ gzip extraction failed"; exit 1; }
-
-    elif [[ "$FILENAME" == *.pkg.tar.zst ]]; then
-        echo "📦 Extracting zst package..."
-
-        if ! command -v zstd >/dev/null 2>&1; then
-            echo "📥 Installing zstd..."
-            sudo apt-get update && sudo apt-get install -y zstd
-        fi
-
-        tar -I zstd -xvf "$FILENAME" || { echo "❌ tar extraction failed"; exit 1; }
-
-        CORE_BIN=$(find . -type f -name "mihomo*" | head -n1)
-
-        if [ -z "$CORE_BIN" ]; then
-            echo "❌ mihomo binary not found!"
-            exit 1
-        fi
-
-        mv "$CORE_BIN" clash_meta
-
+        echo "📦 Extracting core..."
+        gunzip -c "$FILENAME" > clash_meta || { echo "❌ Extraction failed"; exit 1; }
     else
-        echo "❌ Unsupported core format: $FILENAME"
+        echo "❌ Unexpected format (not .gz): $FILENAME"
         exit 1
     fi
 
     chmod +x clash_meta || { echo "❌ chmod failed"; exit 1; }
 
     rm -f "$FILENAME"
+
+    # ========================
+    # 最终校验
+    # ========================
+    if [ ! -s clash_meta ]; then
+        echo "❌ Core file is empty!"
+        exit 1
+    fi
 
     echo "🎉 OpenClash Smart Core installed successfully!"
 
