@@ -37,13 +37,13 @@ if [ -d *"OpenClash"* ]; then
     RELEASE_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5")
 
     # ========================
-    # 获取所有候选（只要 .gz + alpha-smart）
+    # 获取候选核心
     # ========================
     CANDIDATES=$(echo "$RELEASE_JSON" | jq -r --arg arch "$CORE_TYPE" '
         .[]
         | select(.prerelease == true)
         | .assets[]
-        | select(.name | test("mihomo-linux-" + $arch + "-v[0-9]+-.*alpha-smart.*\\.gz"))
+        | select(.name | test("mihomo-linux-" + $arch + "-.*alpha-smart.*\\.gz"))
         | "\(.name)|\(.browser_download_url)"
     ')
 
@@ -56,27 +56,54 @@ if [ -d *"OpenClash"* ]; then
     echo "$CANDIDATES"
 
     # ========================
-    # 按版本号排序（取最大 v）
+    # 1️⃣ 优先无 v 版本
     # ========================
-    SELECT_RESULT=$(echo "$CANDIDATES" | awk -F'|' '
+    NO_V=$(echo "$CANDIDATES" | awk -F'|' '
     {
         name=$1
-        url=$2
-        match(name, /-v([0-9]+)-/, arr)
-        ver=arr[1]
-        print ver "|" url "|" name
+        if (name !~ /-v[0-9]+-/) {
+            print $0
+        }
     }
-    ' | sort -t'|' -k1,1nr | head -n1)
+    ' | head -n1)
 
-    ASSET_URL=$(echo "$SELECT_RESULT" | cut -d'|' -f2)
-    SELECTED_NAME=$(echo "$SELECT_RESULT" | cut -d'|' -f3)
+    if [ -n "$NO_V" ]; then
+        echo "✅ Using non-version core"
 
+        ASSET_URL=$(echo "$NO_V" | cut -d'|' -f2)
+        SELECTED_NAME=$(echo "$NO_V" | cut -d'|' -f1)
+
+    else
+        echo "⚠️ No non-version core found, selecting highest version..."
+
+        # ========================
+        # 2️⃣ 带 v → 选最大版本
+        # ========================
+        SELECT_RESULT=$(echo "$CANDIDATES" | awk -F'|' '
+        {
+            name=$1
+            url=$2
+
+            if (match(name, /-v([0-9]+)-/, arr)) {
+                ver=arr[1]
+                print ver "|" url "|" name
+            }
+        }
+        ' | sort -t'|' -k1,1nr | head -n1)
+
+        ASSET_URL=$(echo "$SELECT_RESULT" | cut -d'|' -f2)
+        SELECTED_NAME=$(echo "$SELECT_RESULT" | cut -d'|' -f3)
+    fi
+
+    # ========================
+    # 校验
+    # ========================
     if [ -z "$ASSET_URL" ]; then
         echo "❌ Failed to select Smart Core!"
         exit 1
     fi
 
-    echo "✅ Selected highest version core:"
+    echo "🎯 Selected core:"
     echo "📦 $SELECTED_NAME"
     echo "🔗 $ASSET_URL"
 
@@ -111,7 +138,7 @@ if [ -d *"OpenClash"* ]; then
     echo "✅ GeoSite: $LATEST_GEOURL"
 
     # ========================
-    # 下载数据文件
+    # 下载数据
     # ========================
     cd ./OpenClash/luci-app-openclash/root/etc/openclash/ || exit 1
 
@@ -137,13 +164,13 @@ if [ -d *"OpenClash"* ]; then
     echo "📦 Downloaded: $FILENAME"
 
     # ========================
-    # 解压（仅支持 gz）
+    # 解压
     # ========================
     if [[ "$FILENAME" == *.gz ]]; then
         echo "📦 Extracting core..."
         gunzip -c "$FILENAME" > clash_meta || { echo "❌ Extraction failed"; exit 1; }
     else
-        echo "❌ Unexpected format (not .gz): $FILENAME"
+        echo "❌ Unexpected format: $FILENAME"
         exit 1
     fi
 
