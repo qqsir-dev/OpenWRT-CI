@@ -26,172 +26,81 @@ fi
 
 # 预置OpenClash smart内核和数据
 if [ -d *"OpenClash"* ]; then
-
+#   CORE_VER="https://raw.githubusercontent.com/vernesong/OpenClash/core/dev/core_version"
     CORE_TYPE=$(echo $WRT_CONFIG | grep -Eiq "64|86" && echo "amd64" || echo "arm64")
+#   CORE_TUN_VER=$(curl -sL $CORE_VER | sed -n "2{s/\r$//;p;q}")
 
+    # 设置仓库信息
     OWNER="vernesong"
     REPO="mihomo"
+    FILE_PATTERN="mihomo-linux-$CORE_TYPE-alpha-smart.*\\.gz"
 
-    echo "🔍 Fetching OpenClash Smart Core (Linux-$CORE_TYPE)..."
-
+    # 获取最新的预发布的Smart核心版本信息
+    echo "Retrieving the latest pre-release version information for OpenClash Smart Core..."
     RELEASE_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/releases?per_page=5")
 
-    # ========================
-    # 获取候选核心
-    # ========================
-    CANDIDATES=$(echo "$RELEASE_JSON" | jq -r --arg arch "$CORE_TYPE" '
-        .[]
-        | select(.prerelease == true)
-        | .assets[]
-        | select(.name | test("mihomo-linux-" + $arch + "-.*alpha-smart.*\\.gz"))
-        | "\(.name)|\(.browser_download_url)"
-    ')
+    # 提取包含所需资源文件的最新预发布版本资源信息
+    ASSET_URL=$(echo "$RELEASE_JSON" | jq -r --arg pattern "$FILE_PATTERN" \
+        '.[] | select(.prerelease == true) | .assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n1)
 
-    if [ -z "$CANDIDATES" ]; then
-        echo "❌ No Smart Core candidates found!"
-        exit 1
-    fi
-
-    echo "🔎 Candidates:"
-    echo "$CANDIDATES"
-
-    # ========================
-    # 1️⃣ 优先无 v 版本
-    # ========================
-    NO_V=$(echo "$CANDIDATES" | awk -F'|' '
-    {
-        name=$1
-        if (name !~ /-v[0-9]+-/) {
-            print $0
-        }
-    }
-    ' | head -n1)
-
-    if [ -n "$NO_V" ]; then
-        echo "✅ Using non-version core"
-
-        ASSET_URL=$(echo "$NO_V" | cut -d'|' -f2)
-        SELECTED_NAME=$(echo "$NO_V" | cut -d'|' -f1)
-
+    if [ -n "$ASSET_URL" ] && [ "$ASSET_URL" != "null" ]; then
+        echo "✅ Find the Smart Core file download link: $ASSET_URL"
+        FILENAME=$(basename "$ASSET_URL")
+        echo "File Name: $FILENAME"
     else
-        echo "⚠️ No non-version core found, selecting highest version..."
-
-        # ========================
-        # 2️⃣ 带 v → 选最大版本
-        # ========================
-        SELECT_RESULT=$(echo "$CANDIDATES" | awk -F'|' '
-        {
-            name=$1
-            url=$2
-
-            if (match(name, /-v([0-9]+)-/, arr)) {
-                ver=arr[1]
-                print ver "|" url "|" name
-            }
-        }
-        ' | sort -t'|' -k1,1nr | head -n1)
-
-        ASSET_URL=$(echo "$SELECT_RESULT" | cut -d'|' -f2)
-        SELECTED_NAME=$(echo "$SELECT_RESULT" | cut -d'|' -f3)
-    fi
-
-    # ========================
-    # 校验
-    # ========================
-    if [ -z "$ASSET_URL" ]; then
-        echo "❌ Failed to select Smart Core!"
+        echo "❌ No matching pre-release resource file found."
+        echo "❌ Stop compiling to avoid incomplete firmware."
         exit 1
     fi
 
-    echo "🎯 Selected core:"
-    echo "📦 $SELECTED_NAME"
-    echo "🔗 $ASSET_URL"
-
-    FILENAME=$(basename "$ASSET_URL")
-
-    # ========================
-    # 获取 MMDB
-    # ========================
+    # 获取最新发布的Country.mmdb下载链接
     LATEST_MMDBURL=$(curl -s "https://api.github.com/repos/alecthw/mmdb_china_ip_list/releases/latest" | \
         grep -o '"browser_download_url": *"[^"]*Country\.mmdb"' | \
         cut -d'"' -f4)
 
-    if [ -z "$LATEST_MMDBURL" ]; then
-        echo "❌ Failed to fetch Country.mmdb"
+    if [ -n "$LATEST_MMDBURL" ]; then
+        echo "✅ The latest MMDB link: $LATEST_MMDBURL"
+        GEO_MMDB="$LATEST_MMDBURL"
+    else
+        echo "❌ No matching Country.mmdb found."
         exit 1
     fi
 
-    echo "✅ MMDB: $LATEST_MMDBURL"
-
-    # ========================
-    # 获取 GeoSite
-    # ========================
+    # 获取最新发布的geosite.dat下载链接
     LATEST_GEOURL=$(curl -s "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest" | \
         grep -o '"browser_download_url": *"[^"]*geosite\.dat"' | \
         cut -d'"' -f4)
 
-    if [ -z "$LATEST_GEOURL" ]; then
-        echo "❌ Failed to fetch geosite.dat"
-        exit 1
-    fi
-
-    echo "✅ GeoSite: $LATEST_GEOURL"
-
-    # ========================
-    # 下载数据
-    # ========================
-    cd ./OpenClash/luci-app-openclash/root/etc/openclash/ || exit 1
-
-    curl -fL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin \
-        || { echo "❌ Model.bin download failed"; exit 1; }
-
-    curl -fL -o Country.mmdb "$LATEST_MMDBURL" \
-        || { echo "❌ Country.mmdb download failed"; exit 1; }
-
-    curl -fL -o GeoSite.dat "$LATEST_GEOURL" \
-        || { echo "❌ GeoSite.dat download failed"; exit 1; }
-
-    echo "✅ Data files ready"
-
-    # ========================
-    # 下载核心
-    # ========================
-    mkdir -p ./core/ && cd ./core/ || exit 1
-
-    curl -fL -o "$FILENAME" "$ASSET_URL" \
-        || { echo "❌ Core download failed"; exit 1; }
-
-    echo "📦 Downloaded: $FILENAME"
-
-    # ========================
-    # 解压
-    # ========================
-    if [[ "$FILENAME" == *.gz ]]; then
-        echo "📦 Extracting core..."
-        gunzip -c "$FILENAME" > clash_meta || { echo "❌ Extraction failed"; exit 1; }
+    if [ -n "$LATEST_GEOURL" ]; then
+        echo "✅ The Latest GEOSITE link: $LATEST_GEOURL"
+        GEO_SITE="$LATEST_GEOURL"
     else
-        echo "❌ Unexpected format: $FILENAME"
+        echo "❌ No matching geosite.dat found."
         exit 1
     fi
 
-    chmod +x clash_meta || { echo "❌ chmod failed"; exit 1; }
+#   GEO_IP="https://github.com/Loyalsoldier/v2ray-rules-dat/raw/release/geoip.dat"
 
-    rm -f "$FILENAME"
+    cd ./OpenClash/luci-app-openclash/root/etc/openclash/ || exit 1
+    curl -sL -o Model.bin https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin && echo "OpenClash Model.bin done!" || exit 1
+    curl -sL -o Country.mmdb "$GEO_MMDB" && echo "✅ OpenClash Country.mmdb done!" || exit 1
+    curl -sL -o GeoSite.dat "$GEO_SITE" && echo "✅ OpenClash GeoSite.dat done!" || exit 1
+#   curl -sL -o GeoIP.dat $GEO_IP && echo "OpenClash GeoIP.dat done!"
 
-    # ========================
-    # 最终校验
-    # ========================
-    if [ ! -s clash_meta ]; then
-        echo "❌ Core file is empty!"
+    mkdir -p ./core/ && cd ./core/ || exit 1
+    curl -sL -o "$FILENAME" "$ASSET_URL" || exit 1
+
+    gunzip -c "$FILENAME" > clash_meta
+    if [ $? -eq 0 ]; then
+        echo "✅ OpenClash smart core done!"
+        chmod +x clash_meta
+        rm -f "$FILENAME"
+    else
+        echo "❌ Decompression failed!"
         exit 1
     fi
 
-    echo "🎉 OpenClash Smart Core installed successfully!"
-
-    cd $PKG_PATH || exit 1
-
-    echo "✅ OpenClash core & data update completed!"
-
+    cd "$PKG_PATH" && echo "✅ OpenClash smart core, Model and data have been updated!" || exit 1
 fi
 
 #修改argon主题字体和颜色
