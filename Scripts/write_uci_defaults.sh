@@ -183,9 +183,6 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   uciq set "luci.main.lang=en"
   uciq commit luci
 
-  uciq set "system.@system[0].timezone='CST-8'"
-  uciq set "system.@system[0].zonename='Asia/Shanghai'"
-  uciq commit system
 fi
 
 # ============================================================
@@ -230,9 +227,6 @@ if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
 
   # uciq set "luci.main.lang=en"
   # uciq commit luci
-  uciq set "system.@system[0].timezone='CST-8'"
-  uciq set "system.@system[0].zonename='Asia/Shanghai'"
-  uciq commit system
 fi
 
 # ============================================================
@@ -265,9 +259,6 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
 
   # uciq set "luci.main.lang=en"
   # uciq commit luci
-  uciq set "system.@system[0].timezone='CST-8'"
-  uciq set "system.@system[0].zonename='Asia/Shanghai'"
-  uciq commit system
 fi
 
 # ddns-go: copy private config into ddns-go dir (avoid build-time file conflict)
