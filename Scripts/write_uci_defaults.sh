@@ -113,6 +113,13 @@ log "Start. WRT_CONFIG='\$WRT_CONFIG' WRT_IP='\$WRT_IP'"
 uciq delete ttyd.@ttyd[0].interface
 uciq commit ttyd
 
+#===========================================
+#设置时区
+#===========================================
+uciq set system.@system[0].timezone='CST-8'
+uciq set system.@system[0].zonename='Asia/Shanghai'
+uciq commit system
+
 # ============================================================
 # X86 (matrix= X86)
 # ============================================================
