@@ -140,7 +140,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "X86|64|86"; then
   uciq commit network
 
   # DHCP / RA（不开放 IPv6，这里不做 relay，不做奇怪的 ndp/ra relay）
-  ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76"
+  ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,8.8.8.8,1.1.1.1,114.114.114.114,180.76.76.76"
   uciq set "dhcp.lan.ra=server"
   uciq set "dhcp.lan.dhcpv6=server"
   uciq set "dhcp.lan.ndp=disabled"
@@ -215,7 +215,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "R68"; then
   # DHCP / RA
   uciq set "dhcp.lan.start=150"
   uciq set "dhcp.lan.limit=100"
-  ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76"
+  ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,8.8.8.8,1.1.1.1,114.114.114.114,180.76.76.76"
   uciq set "dhcp.lan.ra=server"
   uciq set "dhcp.lan.dhcpv6=server"
   uciq set "dhcp.lan.ndp=disabled"
@@ -247,7 +247,7 @@ if echo "\$WRT_CONFIG" | grep -Eiq "ROCK"; then
 
   uciq set "dhcp.lan.start=150"
   uciq set "dhcp.lan.limit=100"
-  ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,1.1.1.1,114.114.114.114,180.76.76.76"
+  ensure_list dhcp.lan.dhcp_option "6,119.29.29.29,223.5.5.5,208.67.222.222,8.8.8.8,1.1.1.1,114.114.114.114,180.76.76.76"
   uciq set "dhcp.lan.ra=server"
   uciq set "dhcp.lan.dhcpv6=server"
   uciq set "dhcp.lan.ndp=disabled"
