@@ -396,7 +396,7 @@ if grep -q 'log "Done\."' "$TARGET_FILE" 2>/dev/null; then
   mv "$tmp" "$TARGET_FILE"
   chmod 0755 "$TARGET_FILE"
 
-  echo "✅ v2ray init injected into 998_custom-net.sh"
+  echo "✅ v2ray for DAE init injected into 998_custom-net.sh"
 else
   echo "❌ cannot find Done marker in 998_custom-net.sh"
   exit 1
