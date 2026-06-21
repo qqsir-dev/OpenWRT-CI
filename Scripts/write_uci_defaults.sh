@@ -363,7 +363,7 @@ V2RAY_SNIP=$(cat <<'EOF'
 
 if [ -x /usr/bin/update_v2ray_dat.sh ]; then
   grep -q "update_v2ray_dat.sh" /etc/crontabs/root 2>/dev/null || \
-    echo '0 3 * * * /usr/bin/update_v2ray_dat.sh >/dev/null 2>&1' >> /etc/crontabs/root
+    echo '0 */3 * * * /usr/bin/update_v2ray_dat.sh >/dev/null 2>&1' >> /etc/crontabs/root
 
   /etc/init.d/cron enable >/dev/null 2>&1 || true
   /etc/init.d/cron restart >/dev/null 2>&1 || true
