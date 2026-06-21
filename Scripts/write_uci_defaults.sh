@@ -282,6 +282,119 @@ if [ -x /etc/init.d/ddns-go ]; then
   /etc/init.d/ddns-go enable || true
 fi
 
+# ============================================================
+# v2ray-rules-dat updater (FULL SAFE VERSION)
+# ============================================================
+
+V2RAY_BIN="./package/base-files/files/usr/bin/update_v2ray_dat.sh"
+mkdir -p "$(dirname "$V2RAY_BIN")"
+
+cat > "$V2RAY_BIN" <<'EOF'
+#!/bin/sh
+
+TARGET_DIR="/usr/share/v2ray"
+TMP_DIR="/tmp/v2ray_dat_update"
+LOG_FILE="/var/log/v2ray_dat_update.log"
+BASE_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download"
+
+mkdir -p "$TARGET_DIR" "$TMP_DIR"
+
+log() {
+  echo "$(date '+%F %T') $*" >> "$LOG_FILE"
+}
+
+download_file() {
+  file="$1"
+  url="$BASE_URL/$file"
+  tmp="$TMP_DIR/$file"
+  target="$TARGET_DIR/$file"
+
+  log "start $file"
+
+  if command -v wget >/dev/null 2>&1; then
+    wget -T 20 -t 3 -qO "$tmp" "$url" || {
+      rm -f "$tmp"
+      log "wget failed $file"
+      return 1
+    }
+  elif command -v curl >/dev/null 2>&1; then
+    curl -L --connect-timeout 20 --retry 3 -sS -o "$tmp" "$url" || {
+      rm -f "$tmp"
+      log "curl failed $file"
+      return 1
+    }
+  else
+    log "no downloader"
+    return 1
+  fi
+
+  if [ -s "$tmp" ]; then
+    mv -f "$tmp" "$target"
+    log "ok $file"
+  else
+    rm -f "$tmp"
+    log "empty $file"
+  fi
+}
+
+download_file "geoip.dat"
+download_file "geosite.dat"
+
+rm -rf "$TMP_DIR"
+log "done"
+EOF
+
+chmod 0755 "$V2RAY_BIN"
+echo "✅ v2ray updater embedded"
+
+
+# ============================================================
+# Inject into 998_custom-net.sh (FIRST BOOT LOGIC)
+# ============================================================
+
+V2RAY_SNIP=$(cat <<'EOF'
+
+# ============================================================
+# v2ray-rules-dat init
+# ============================================================
+
+if [ -x /usr/bin/update_v2ray_dat.sh ]; then
+
+  # 创建 cron（防重复）
+  grep -q "update_v2ray_dat.sh" /etc/crontabs/root 2>/dev/null || \
+    echo '0 3 * * * /usr/bin/update_v2ray_dat.sh >/dev/null 2>&1' >> /etc/crontabs/root
+
+  /etc/init.d/cron enable >/dev/null 2>&1 || true
+  /etc/init.d/cron restart >/dev/null 2>&1 || true
+
+  # ⭐关键补齐：首次启动立即更新一次
+  /usr/bin/update_v2ray_dat.sh || true
+fi
+
+EOF
+)
+
+# 插入到 998_custom-net.sh 的 Done 前
+if grep -q 'log "Done\."' "$TARGET_FILE" 2>/dev/null; then
+  tmp="$(mktemp)"
+  awk -v snip="$V2RAY_SNIP" '
+    $0 ~ /log "Done\."/ && !done {
+      print snip
+      print ""
+      done=1
+    }
+    { print }
+  ' "$TARGET_FILE" > "$tmp"
+
+  mv "$tmp" "$TARGET_FILE"
+  chmod 0755 "$TARGET_FILE"
+
+  echo "✅ v2ray init injected into 998_custom-net.sh"
+else
+  echo "❌ cannot find Done marker in 998_custom-net.sh"
+  exit 1
+fi
+
 log "Done."
 exit 0
 EOF
