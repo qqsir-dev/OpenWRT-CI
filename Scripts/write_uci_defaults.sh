@@ -282,14 +282,21 @@ if [ -x /etc/init.d/ddns-go ]; then
   /etc/init.d/ddns-go enable || true
 fi
 
+log "Done."
+exit 0
+EOF
+
+chmod 0755 "$TARGET_FILE"
+echo "✅ [write_uci_defaults] wrote $TARGET_FILE (WRT_CONFIG=$WRT_CONFIG_BUILD)"
+
 # ============================================================
-# v2ray-rules-dat updater
+# v2ray-rules-dat updater (FULL SAFE VERSION)
 # ============================================================
 
-V2RAY_BIN_FILE="./package/base-files/files/usr/bin/update_v2ray_dat.sh"
-mkdir -p "$(dirname "$V2RAY_BIN_FILE")"
+V2RAY_BIN="./package/base-files/files/usr/bin/update_v2ray_dat.sh"
+mkdir -p "$(dirname "$V2RAY_BIN")"
 
-cat > "$V2RAY_BIN_FILE" <<'EOF'
+cat > "$V2RAY_BIN" <<'EOF'
 #!/bin/sh
 
 TARGET_DIR="/usr/share/v2ray"
@@ -309,32 +316,31 @@ download_file() {
   tmp="$TMP_DIR/$file"
   target="$TARGET_DIR/$file"
 
-  log "start: $file"
+  log "start $file"
 
   if command -v wget >/dev/null 2>&1; then
     wget -T 20 -t 3 -qO "$tmp" "$url" || {
       rm -f "$tmp"
-      log "wget failed: $file"
+      log "wget failed $file"
       return 1
     }
   elif command -v curl >/dev/null 2>&1; then
     curl -L --connect-timeout 20 --retry 3 -sS -o "$tmp" "$url" || {
       rm -f "$tmp"
-      log "curl failed: $file"
+      log "curl failed $file"
       return 1
     }
   else
-    log "no downloader found"
+    log "no downloader"
     return 1
   fi
 
   if [ -s "$tmp" ]; then
     mv -f "$tmp" "$target"
-    log "ok: $file"
+    log "ok $file"
   else
     rm -f "$tmp"
-    log "empty file: $file"
-    return 1
+    log "empty $file"
   fi
 }
 
@@ -345,9 +351,13 @@ rm -rf "$TMP_DIR"
 log "done"
 EOF
 
-chmod 0755 "$V2RAY_BIN_FILE"
+chmod 0755 "$V2RAY_BIN"
 echo "✅ v2ray updater embedded"
 
+
+# ============================================================
+# Inject into 998_custom-net.sh (FIRST BOOT LOGIC)
+# ============================================================
 
 V2RAY_SNIP=$(cat <<'EOF'
 
@@ -356,18 +366,22 @@ V2RAY_SNIP=$(cat <<'EOF'
 # ============================================================
 
 if [ -x /usr/bin/update_v2ray_dat.sh ]; then
+
+  # 创建 cron（防重复）
   grep -q "update_v2ray_dat.sh" /etc/crontabs/root 2>/dev/null || \
     echo '0 3 * * * /usr/bin/update_v2ray_dat.sh >/dev/null 2>&1' >> /etc/crontabs/root
 
   /etc/init.d/cron enable >/dev/null 2>&1 || true
   /etc/init.d/cron restart >/dev/null 2>&1 || true
 
+  # ⭐关键补齐：首次启动立即更新一次
   /usr/bin/update_v2ray_dat.sh || true
 fi
 
 EOF
 )
 
+# 插入到 998_custom-net.sh 的 Done 前
 if grep -q 'log "Done\."' "$TARGET_FILE" 2>/dev/null; then
   tmp="$(mktemp)"
   awk -v snip="$V2RAY_SNIP" '
@@ -381,18 +395,12 @@ if grep -q 'log "Done\."' "$TARGET_FILE" 2>/dev/null; then
 
   mv "$tmp" "$TARGET_FILE"
   chmod 0755 "$TARGET_FILE"
+
   echo "✅ v2ray init injected into 998_custom-net.sh"
 else
   echo "❌ cannot find Done marker in 998_custom-net.sh"
   exit 1
 fi
-
-log "Done."
-exit 0
-EOF
-
-chmod 0755 "$TARGET_FILE"
-echo "✅ [write_uci_defaults] wrote $TARGET_FILE (WRT_CONFIG=$WRT_CONFIG_BUILD)"
 
 # ------------------------------------------------------------
 # Patch or create 999_auto-restart.sh to restart services
