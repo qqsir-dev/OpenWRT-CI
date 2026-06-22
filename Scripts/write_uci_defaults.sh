@@ -290,85 +290,72 @@ chmod 0755 "$TARGET_FILE"
 echo "✅ [write_uci_defaults] wrote $TARGET_FILE (WRT_CONFIG=$WRT_CONFIG_BUILD)"
 
 # ============================================================
-# v2ray-rules-dat updater
+# v2ray-rules-dat bootstrap files
+#   compile-time download -> /usr/geodata-bootstrap
+#   first boot copy       -> /usr/share/v2ray
 # ============================================================
 
-V2RAY_BIN_FILE="./package/base-files/files/usr/bin/update_v2ray_dat.sh"
-mkdir -p "$(dirname "$V2RAY_BIN_FILE")"
+V2RAY_BOOT_DIR="./package/base-files/files/usr/geodata-bootstrap"
+mkdir -p "$V2RAY_BOOT_DIR"
 
-cat > "$V2RAY_BIN_FILE" <<'EOF'
-#!/bin/sh
-
-TARGET_DIR="/usr/share/v2ray"
-TMP_DIR="/tmp/v2ray_dat_update"
-LOG_FILE="/var/log/v2ray_dat_update.log"
-BASE_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download"
-
-mkdir -p "$TARGET_DIR" "$TMP_DIR"
-
-log() {
-  echo "$(date '+%F %T') $*" >> "$LOG_FILE"
+TMP_BOOT_DIR="$(mktemp -d)"
+cleanup_boot_tmp() {
+  rm -rf "$TMP_BOOT_DIR"
 }
+trap cleanup_boot_tmp EXIT
 
-download_file() {
-  file="$1"
-  url="$BASE_URL/$file"
-  tmp="$TMP_DIR/$file"
-  target="$TARGET_DIR/$file"
+download_boot_file() {
+  local file="$1"
+  local url="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/$file"
+  local tmp_file="$TMP_BOOT_DIR/$file"
+  local out_file="$V2RAY_BOOT_DIR/$file"
 
-  log "start: $file"
+  echo "⬇️  downloading $file"
 
   if command -v wget >/dev/null 2>&1; then
-    wget -T 20 -t 3 -qO "$tmp" "$url" || {
-      rm -f "$tmp"
-      log "wget failed: $file"
-      return 1
-    }
+    wget -T 30 -t 3 -qO "$tmp_file" "$url"
   elif command -v curl >/dev/null 2>&1; then
-    curl -L --connect-timeout 20 --retry 3 -sS -o "$tmp" "$url" || {
-      rm -f "$tmp"
-      log "curl failed: $file"
-      return 1
-    }
+    curl -L --connect-timeout 30 --retry 3 -sS -o "$tmp_file" "$url"
   else
-    log "no downloader found"
-    return 1
+    echo "❌ neither wget nor curl found"
+    exit 1
   fi
 
-  if [ -s "$tmp" ]; then
-    mv -f "$tmp" "$target"
-    log "ok: $file"
-  else
-    rm -f "$tmp"
-    log "empty file: $file"
-    return 1
+  if [ ! -s "$tmp_file" ]; then
+    echo "❌ downloaded empty file: $file"
+    exit 1
   fi
+
+  mv -f "$tmp_file" "$out_file"
+  chmod 0644 "$out_file"
+  echo "✅ saved $file to $out_file"
 }
 
-download_file "geoip.dat"
-download_file "geosite.dat"
+download_boot_file "geoip.dat"
+download_boot_file "geosite.dat"
 
-rm -rf "$TMP_DIR"
-log "done"
-EOF
+echo "✅ v2ray bootstrap files embedded"
 
-chmod 0755 "$V2RAY_BIN_FILE"
-echo "✅ v2ray updater embedded"
-
-V2RAY_SNIP=$(cat <<'EOF'
 
 # ============================================================
-# v2ray-rules-dat init
+# Inject v2ray copy logic into 998_custom-net.sh
 # ============================================================
 
-if [ -x /usr/bin/update_v2ray_dat.sh ]; then
-  grep -q "update_v2ray_dat.sh" /etc/crontabs/root 2>/dev/null || \
-    echo '0 */3 * * * /usr/bin/update_v2ray_dat.sh >/dev/null 2>&1' >> /etc/crontabs/root
+V2RAY_COPY_SNIP=$(cat <<'EOF'
 
-  /etc/init.d/cron enable >/dev/null 2>&1 || true
-  /etc/init.d/cron restart >/dev/null 2>&1 || true
+# ============================================================
+# v2ray-rules-dat bootstrap copy
+# ============================================================
+if [ -d /usr/geodata-bootstrap ]; then
+  mkdir -p /usr/share/v2ray
 
-  /usr/bin/update_v2ray_dat.sh || true
+  if [ -s /usr/geodata-bootstrap/geoip.dat ]; then
+    cp -f /usr/geodata-bootstrap/geoip.dat /usr/share/v2ray/geoip.dat
+  fi
+
+  if [ -s /usr/geodata-bootstrap/geosite.dat ]; then
+    cp -f /usr/geodata-bootstrap/geosite.dat /usr/share/v2ray/geosite.dat
+  fi
 fi
 
 EOF
@@ -376,7 +363,7 @@ EOF
 
 if grep -q 'log "Done\."' "$TARGET_FILE" 2>/dev/null; then
   tmp="$(mktemp)"
-  awk -v snip="$V2RAY_SNIP" '
+  awk -v snip="$V2RAY_COPY_SNIP" '
     $0 ~ /log "Done\."/ && !done {
       print snip
       print ""
@@ -387,9 +374,9 @@ if grep -q 'log "Done\."' "$TARGET_FILE" 2>/dev/null; then
 
   mv "$tmp" "$TARGET_FILE"
   chmod 0755 "$TARGET_FILE"
-  echo "✅ v2ray init injected into 998_custom-net.sh"
+  echo "✅ v2ray bootstrap copy injected into 998_custom-net.sh"
 else
-  echo "❌ cannot find Done marker in 998_custom-net.sh"
+  echo "❌ cannot find log \"Done.\" marker in 998_custom-net.sh"
   exit 1
 fi
 
