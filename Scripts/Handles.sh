@@ -126,21 +126,6 @@ if [ -d *"luci-app-mini-diskmanager"* ]; then
 	cd $PKG_PATH && echo "✅ mini-diskmanager has been fixed!"
 fi
 
-# 修复 luci-app-netspeedtest Python 依赖问题
-LUCI_NETSPEEDTEST_MAKEFILE=$(find $PKG_PATH -path "*/luci-app-netspeedtest/Makefile" | head -n 1)
-
-if [ -n "$LUCI_NETSPEEDTEST_MAKEFILE" ]; then
-    echo "🔧 Fixing luci-app-netspeedtest Python dependencies..."
-    echo "📄 Found: $LUCI_NETSPEEDTEST_MAKEFILE"
-
-    sed -i 's/+python3-email//g' "$LUCI_NETSPEEDTEST_MAKEFILE"
-    sed -i 's/+python3-pkg-resources/+python3-setuptools/g' "$LUCI_NETSPEEDTEST_MAKEFILE"
-
-    cd $PKG_PATH && echo "✅ netspeedtest dependency fixed!"
-else
-    cd $PKG_PATH && echo "ℹ️ luci-app-netspeedtest not found in package/"
-fi
-
 #修复TailScale配置文件冲突
 TS_FILE=$(find ../feeds/packages/ -maxdepth 3 -type f -wholename "*/tailscale/Makefile")
 if [ -f "$TS_FILE" ]; then
