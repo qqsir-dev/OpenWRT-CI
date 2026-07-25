@@ -61,7 +61,7 @@ UPDATE_PACKAGE "openclash" "vernesong/OpenClash" "dev" "pkg"
 # UPDATE_PACKAGE "mihomo" "MetaCubeX/mihomo" "Alpha"
 UPDATE_PACKAGE "passwall" "Openwrt-Passwall/openwrt-passwall" "main" "pkg"
 UPDATE_PACKAGE "passwall2" "Openwrt-Passwall/openwrt-passwall2" "main" "pkg"
-
+UPDATE_PACKAGE "netspeedtest" "muink/luci-app-netspeedtest" "master" "" "homebox ookla-speedtest"
 UPDATE_PACKAGE "luci-app-tailscale" "asvow/luci-app-tailscale" "main"
 
 UPDATE_PACKAGE "diskman" "sbwml/luci-app-diskman" "main"
