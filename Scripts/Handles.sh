@@ -251,7 +251,7 @@ fi
 if [ -d *"luci-theme-argon"* ]; then
 	echo " " && cd ./luci-theme-argon/
 	# 上传自己的 Argon 主题背景
-	cp -f $GITHUB_WORKSPACE/pics/bg1.jpg ./htdocs/luci-static/argon/img/bg1.jpg
+	cp -f $GITHUB_WORKSPACE/pics/bg1.jpg ./htdocs/luci-static/argon/background/bg1.jpg
  	cd $PKG_PATH && echo "✅ theme-argon background has been customized!"
 
 # 	cd ./luci-app-argon-config/
