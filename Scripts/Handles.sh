@@ -253,9 +253,11 @@ if [ -d *"luci-theme-argon"* ]; then
 	# 上传自己的 Argon 主题背景
 	cp -f $GITHUB_WORKSPACE/pics/bg1.jpg ./htdocs/luci-static/argon/background/bg1.jpg
  	cd $PKG_PATH && echo "✅ theme-argon background has been customized!"
-
+	
+	cd ./luci-theme-argon/
 	sed -i "s/'classic'/'centered'/" ./root/etc/config/argon
 	sed -i "s/'0.5'/'0.3'/" ./root/etc/config/argon
+	sed -i "s/'10'/'3'/" ./root/etc/config/argon
 
 	cd $PKG_PATH && echo "✅ theme-argon-config has been customized!"
 fi
