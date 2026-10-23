@@ -256,9 +256,10 @@ if [ -d *"luci-theme-argon"* ]; then
 
 # 	cd ./luci-app-argon-config/
 # 	sed -i '/font-weight:/ {/normal\|!important/! s/\(font-weight:\s*\)[^;]*;/\1normal;/}' $(find ./luci-theme-argon -type f -iname "*.css")
-#	sed -i "s/'0.5'/'0.3'/" ./root/etc/config/argon
+	sed -i "s/'classic'/'centered'/" ./root/etc/config/argon
+	sed -i "s/'0.5'/'0.3'/" ./root/etc/config/argon
 
-#	cd $PKG_PATH && echo " theme-argon-config has been customized!"
+	cd $PKG_PATH && echo " theme-argon-config has been customized!"
 fi
 
 #修改mini-diskmanager菜单位置
