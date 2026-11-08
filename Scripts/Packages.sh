@@ -51,7 +51,7 @@ UPDATE_PACKAGE "luci-theme-argon" "jerrykuku/luci-theme-argon" "master"
 UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf"
 # UPDATE_PACKAGE "kucat" "sirpdboy/luci-theme-kucat" "master"
 # UPDATE_PACKAGE "kucat-config" "sirpdboy/luci-app-kucat-config" "master"
-UPDATE_PACKAGE "luci-app-daed" "kenzok8/openwrt-daede" "main" "" "daed"
+UPDATE_PACKAGE "luci-app-daed" "kenzok8/openwrt-daede" "main" "" "daed dae"
 UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
 
 UPDATE_PACKAGE "homeproxy" "VIKINGYFY/homeproxy" "main"
