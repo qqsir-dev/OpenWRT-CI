@@ -54,8 +54,8 @@ UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-
 UPDATE_PACKAGE "luci-app-daed" "kenzok8/openwrt-honk" "main" "" "daed dae honk Doona"
 UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
 
-UPDATE_PACKAGE "homeproxy" "VIKINGYFY/homeproxy" "main"
-UPDATE_PACKAGE "momo" "nikkinikki-org/OpenWrt-momo" "main"
+# UPDATE_PACKAGE "homeproxy" "VIKINGYFY/homeproxy" "main"
+# UPDATE_PACKAGE "momo" "nikkinikki-org/OpenWrt-momo" "main"
 UPDATE_PACKAGE "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
 UPDATE_PACKAGE "openclash" "vernesong/OpenClash" "dev" "pkg"
 # UPDATE_PACKAGE "mihomo" "MetaCubeX/mihomo" "Alpha"
