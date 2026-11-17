@@ -119,6 +119,17 @@ if [ -f "$TS_FILE" ]; then
 	fi
 fi
 
+#修改natmapt菜单位置
+if [ -d "$PKG_PATH/luci-app-natmapt" ]; then
+	echo " "
+	if sed -i "s/network/services/g" \
+		"$PKG_PATH/luci-app-natmapt/root/usr/share/luci/menu.d/luci-app-natmap.json"; then
+		echo "✅ natmapt has been fixed!"
+	else
+		echo "❌ natmapt fix failed; continuing!"
+	fi
+fi
+
 #修复Rust编译失败Add commentMore actions
 #RUST_FILE="$(find "$FEEDS_PACKAGES" -maxdepth 3 -type f -wholename '*/rust/Makefile' -print -quit 2>/dev/null)"
 #if [ -f "$RUST_FILE" ]; then
